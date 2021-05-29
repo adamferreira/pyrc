@@ -21,4 +21,7 @@ setuptools.setup(
     package_dir={"": "pyrc"},
     packages=setuptools.find_packages(where="pyrc"),
     python_requires=">=3.6",
+    install_requires=[
+       "paramiko"
+   ],
 )
