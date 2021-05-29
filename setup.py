@@ -22,6 +22,7 @@ setuptools.setup(
     packages=setuptools.find_packages(where="pyrc"),
     python_requires=">=3.6",
     install_requires=[
-       "paramiko"
+       "paramiko",
+       "scp"
    ],
 )
