@@ -2,15 +2,17 @@ import paramiko
 from scp import SCPClient, SCPException
 import logging
 import os
+import getpass
 
 # ------------------ RemoteConnector
 class RemoteConnector:
-	def __init__(self, hostname, user, user_config_file, sshkey):
+	def __init__(self, hostname, user, user_config_file, sshkey, askpwd = False):
 		# Class members
 		self.hostname = hostname
 		self.user = user
 		self.user_config_file = user_config_file
 		self.sshkey = sshkey
+		self.askpwd = askpwd
 		self.sshcon = None
 		self.scp = None
 		self.user_config = None
@@ -61,14 +63,21 @@ class RemoteConnector:
 			proxy = paramiko.ProxyCommand(self.user_config["proxycommand"])
 			self.sshcon.connect(self.user_config["hostname"], username=self.user, key_filename=self.sshkey, sock=proxy)
 		else:
-			self.sshcon.connect(self.user_config["hostname"], username=self.user, key_filename=self.sshkey)
+			if self.askpwd:
+				self.sshcon.connect(
+					self.user_config["hostname"], 
+					username=self.user, 
+					key_filename=self.sshkey, 
+					password=getpass.getpass(prompt="Password for " + self.user + "@" + self.user_config["hostname"] + " : "))
+			else:
+				self.sshcon.connect(self.user_config["hostname"], username=self.user, key_filename=self.sshkey)
 
 		# SCP connection
 		self.scp = SCPClient(self.sshcon.get_transport())
 
 	def is_open(self):
 		try:
-			self.open()
+			self.open(self.use_proxy)
 			return True
 		except :
 			return False

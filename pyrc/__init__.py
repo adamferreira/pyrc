@@ -1,1 +1,1 @@
-print("hello")
+from . import remote
