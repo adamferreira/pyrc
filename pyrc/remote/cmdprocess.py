@@ -4,7 +4,7 @@ import os
 try:
     import paramiko
     from scp import SCPClient, SCPException
-    from remote import RemoteConnector
+    from pyrc.remote import RemoteConnector
     _CMDEXEC_REMOTE_ENABLED_ = True
 except:
     _CMDEXEC_REMOTE_ENABLED_ = False
