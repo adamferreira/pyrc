@@ -1,7 +1,7 @@
 
 class SunGridEngineCommand:
     # tips for selecting specific sge id : qstat | grep "^[[:space:]]*$ID[[:space:]]"
-    def fancyqstatcmd(self, flags: 'list[str]' = [], job_prefix: str = None) -> 'list[dict[str:str]]':
+    def fancyqstatcmd(self, flags: 'list[str]' = [], job_prefix: str = None) -> 'str':
         """[summary]
             This perferms a formated qstats command on the remote machine.
             The format is the following : 
@@ -16,7 +16,7 @@ class SunGridEngineCommand:
             Args:
                 job_prefix (str, optional): [description]. Defaults to None.
             Returns:
-                list[str]: [description]
+                str: [description]
         """
         qstat_cmd = "qstat -xml "
         qstat_cmd += " ".join(flags)
