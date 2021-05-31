@@ -18,9 +18,10 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    package_dir={"": "pyrc"},
-    packages=setuptools.find_packages(where="pyrc"),
-    python_requires=">=3.6",
+    package_dir={"pyrc": "pyrc"},
+    packages = ["pyrc", "pyrc.remote", "pyrc.local"],
+    #packages=setuptools.find_packages(where="pyrc"),
+    python_requires=">=3.0",
     install_requires=[
        "paramiko",
        "scp"
