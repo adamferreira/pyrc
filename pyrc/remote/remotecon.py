@@ -45,10 +45,10 @@ class SSHConnector:
 		self.user_config_file = user_config_file
 		self.sshkey = sshkey
 		self.askpwd = askpwd
+		self.use_proxy = use_proxy
 		self.sshcon = None
 		self.scp = None
 		self.user_config = None
-		self.use_proxy = use_proxy
 
 		# Currend directory
 		self.cwd = ""
@@ -239,5 +239,25 @@ class SSHConnector:
 				self.rm(remote_folder_path, "-r")
 		else:
 			raise RuntimeError("Remote folder " + remote_folder_path + " cannot be found on " + self.hostname + ".")
+
+	
+	def get_platform_infos(self) -> 'dict[str:str]':
+		"""[summary]
+		Uses python packages 'platform' on remote host to retrieve system informations
+		The information exactly what 'platform.system()' and 'platform.release()' returns
+		Raises:
+			RuntimeError: [description]
+		Returns:
+			[dict[str:str]]: A dict of remote system informations. Keys are 'system' and 'release'
+		"""
+		pythoncmd = "python -c \"import platform; print(platform.system()); print(platform.release())\""
+		stdin, stdout, stderr = self.exec_command(pythoncmd, print_output = False, print_input = False)
+		errors = stderr.readlines()
+
+		if len(errors) > 0:
+			raise RuntimeError(str(errors))
+
+		output = [line.replace('\n', '') for line in stdout.readlines()]
+		return { "system" : output[0], "release" : output[1] }
 
 # ------------------ SSHConnector
