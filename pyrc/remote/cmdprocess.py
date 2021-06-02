@@ -4,7 +4,7 @@ import os
 try:
     import paramiko
     from scp import SCPClient, SCPException
-    from pyrc.remote import RemoteConnector
+    from pyrc.remote import SSHConnector
     _CMDEXEC_REMOTE_ENABLED_ = True
 except:
     _CMDEXEC_REMOTE_ENABLED_ = False
@@ -39,7 +39,7 @@ class CommandExecutor:
         else:
             raise RuntimeError("Could not load subprocess module.")
 
-    def __exec_remote_cmd(self, cmd:str, flags:'list[str]' = [], remote:RemoteConnector = None , print_output:bool = False, print_input:bool = True) -> 'list[str]':
+    def __exec_remote_cmd(self, cmd:str, flags:'list[str]' = [], remote:SSHConnector = None , print_output:bool = False, print_input:bool = True) -> 'list[str]':
         _cmd:'list[str]' = flags.copy()
         _cmd.insert(0, cmd)
         if _CMDEXEC_REMOTE_ENABLED_:
@@ -49,7 +49,7 @@ class CommandExecutor:
         else:
             raise RuntimeError("Could not load remote modules (paramiko, etc...).")
 
-    def exec_command(self, cmd:str, flags:'list[str]' = [], remote:RemoteConnector = None, print_output:bool = False, print_input:bool = True) -> 'list[str]':
+    def exec_command(self, cmd:str, flags:'list[str]' = [], remote:SSHConnector = None, print_output:bool = False, print_input:bool = True) -> 'list[str]':
         if remote is not None:
             try:
                 return self.__exec_remote_cmd(cmd, flags, remote, print_output, print_input)

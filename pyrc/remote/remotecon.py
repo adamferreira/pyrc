@@ -4,8 +4,8 @@ import logging
 import os
 import getpass
 
-# ------------------ RemoteConnector
-class RemoteConnector:
+# ------------------ SSHConnector
+class SSHConnector:
 	def __init__(self, hostname, user, user_config_file, sshkey, askpwd = False):
 		# Class members
 		self.hostname = hostname
@@ -206,4 +206,4 @@ class RemoteConnector:
 		else:
 			raise RuntimeError("Remote folder " + remote_folder_path + " cannot be found on " + self.hostname + ".")
 
-# ------------------ RemoteConnector
+# ------------------ SSHConnector
