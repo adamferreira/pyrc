@@ -7,7 +7,7 @@ if __name__ == '__main__':
         if "WSL2" in platform.release():
             ssh_config_file = os.path.join("/mnt" , "c", "Users", os.environ["USER"], ".ssh", "config")
         else:
-            ssh_config_file = os.path.join("/home" , "user", os.environ["USER"], ".ssh", "config")
+            ssh_config_file = os.path.join("/home", os.environ["USER"], ".ssh", "config")
 
     if platform.system() == "Windows":
         ssh_config_file = os.path.join("C:", "Users", os.environ["USER"], ".ssh", "config")
