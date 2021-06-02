@@ -6,7 +6,39 @@ import getpass
 
 # ------------------ SSHConnector
 class SSHConnector:
-	def __init__(self, hostname, user, user_config_file, sshkey, askpwd = False):
+
+	def get_ssh_configurations(user_config_file:str) -> 'dict[str:dict[str:str]]':
+		ssh_config = paramiko.SSHConfig.from_path(user_config_file)
+		return {hostname : ssh_config.lookup(hostname) for hostname in ssh_config.get_hostnames()}
+
+
+	def create_connectors(user_config_file:str, sshkey:str=None) -> 'dict[str:SSHConnector]':
+		# Exception if file does not exist
+		ssh_configs = SSHConnector.get_ssh_configurations(user_config_file)
+
+		# If no sshkey specified we add one from the folder where the config file is
+		if sshkey is None:
+			sshkey = os.path.join(os.path.dirname(user_config_file), "id_rsa")
+		
+		connectors = {}
+		for hostname in ssh_configs:
+			if hostname == "*":
+				continue
+			
+			# Creating user config dictionnary
+			user_config = ssh_configs[hostname]
+			connectors[hostname] = SSHConnector(
+				hostname=hostname,
+				user=user_config["user"],
+				user_config_file=user_config_file,
+				sshkey=sshkey,
+				use_proxy="proxycommand" in user_config,
+				askpwd = False
+			)
+		return connectors
+
+
+	def __init__(self, hostname, user, user_config_file, sshkey, use_proxy:bool = False, askpwd = False):
 		# Class members
 		self.hostname = hostname
 		self.user = user
@@ -16,7 +48,7 @@ class SSHConnector:
 		self.sshcon = None
 		self.scp = None
 		self.user_config = None
-		self.use_proxy = False
+		self.use_proxy = use_proxy
 
 		# Currend directory
 		self.cwd = ""
@@ -52,14 +84,16 @@ class SSHConnector:
 		
 		return stdin, stdout, stderr
 
-	def open(self, use_proxy = False):
+	def open(self, use_proxy:bool = None):
 		"""[summary]
 			Opens the remote connection.
 		Args:
 			use_proxy (bool): Specify if the remote connection should go through a proxy.
 		"""
-		self.use_proxy = use_proxy
-		if use_proxy:
+		if use_proxy is not None:
+			self.use_proxy = use_proxy
+
+		if self.use_proxy:
 			proxy = paramiko.ProxyCommand(self.user_config["proxycommand"])
 			self.sshcon.connect(self.user_config["hostname"], username=self.user, key_filename=self.sshkey, sock=proxy)
 		else:
