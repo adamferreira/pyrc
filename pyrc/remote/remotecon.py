@@ -21,7 +21,8 @@ class SSHConnector:
 
 	def sshkey(self) -> str:
 		return str(self._sshkey)
-#
+
+	# TODO : remove user_config_file and use_proxy, passe loghostname and proxy command !
 	def __init__(self, hostname, user, user_config_file, sshkey, use_proxy:bool = False, askpwd = False):
 		# Public members
 		self.askpwd:bool = askpwd
