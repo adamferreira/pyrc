@@ -3,15 +3,44 @@ from scp import SCPClient, SCPException
 import logging
 import getpass
 
+def strip_stdout(stdout):
+	return stdout.read().decode("utf-8").strip('\n').split('\n')	
+
 # ------------------ SSHConnector
 class SSHConnector:
 
-	#@property
-	#def askpwd(self):
-	#	return self._askpwd
-	#@askpwd.setter
-	#def askpwd(self, askpwd):
-	#	self._askpwd = askpwd
+	class SSHEnvironDict(dict[str:str]):
+		# if the connection is alredy open, we get all remote env vars
+		def __init__(self, remote):
+			self.remote = remote
+			if self.remote is not None and self.remote.is_open():
+				self.load_env()
+
+		# If a var is already in the dict (assumed loaded from remote)
+		# We return is at is is
+		# Otherwise it is loaded from remote and stored in the dict
+		def __getitem__(self, key:str):
+			# Get cached key if entry exists
+			if key in self:
+				return super().__getitem__(key)
+			else:
+				super().__setitem__(key, self.remote._env(key))
+				return super().__getitem__(key)
+
+		# Get all remote env vars
+		def load_env(self):
+			remoteenvs = self.remote._printenv()
+			for key,val in remoteenvs.items():
+				super().__setitem__(key, val)
+
+
+	@property
+	def askpwd(self):
+		return self._askpwd
+
+	@askpwd.setter
+	def askpwd(self, askpwd):
+		self._askpwd = askpwd
 
 	def hostmame(self) -> str:
 		return str(self._hostname)
@@ -27,6 +56,7 @@ class SSHConnector:
 		# Public members
 		self.askpwd:bool = askpwd
 		self.use_proxy:bool = use_proxy
+		self.environ = None
 
 		# Read-only protected members
 		self._hostname:str = hostname
@@ -54,7 +84,7 @@ class SSHConnector:
 		self._sshcon.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # no known_hosts error
 
 
-	def exec_command(self, cmd, print_output = False, print_input = True):
+	def exec_command(self, cmd:str, print_output:bool = False, print_input:bool = True):
 		"""[summary]
 			Execute the given command line on the remote machine.
 		Args:
@@ -73,6 +103,10 @@ class SSHConnector:
 				print("[" + self.user() + "@" + self._hostname + "] ->", line)
 		
 		return stdin, stdout, stderr
+
+	def check_output(self, cmd:str):
+		_, stdout, _ = self.exec_command(cmd, print_output=False, print_input=False)
+		return strip_stdout(stdout)
 
 	def open(self):
 		"""[summary]
@@ -94,14 +128,10 @@ class SSHConnector:
 		# SCP connection
 		self._scp = SCPClient(self._sshcon.get_transport())
 
+		self.environ = SSHConnector.SSHEnvironDict(self)
+
 	def is_open(self):
-		try:
-			self.open(self.use_proxy)
-			return True
-		except :
-			return False
-		
-		return False
+		return self._sshcon.get_transport().is_active()
 
 	def close(self):
 		"""[summary]
@@ -226,7 +256,7 @@ class SSHConnector:
 			raise RuntimeError("Remote folder " + remote_folder_path + " cannot be found on " + self._hostname + ".")
 
 	
-	def platform_infos(self) -> 'dict[str:str]':
+	def platform(self) -> 'dict[str:str]':
 		"""[summary]
 		Uses python packages 'platform' on remote host to retrieve system informations
 		The information exactly what 'platform.system()' and 'platform.release()' returns
@@ -235,22 +265,19 @@ class SSHConnector:
 		Returns:
 			[dict[str:str]]: A dict of remote system informations. Keys are 'system' and 'release'
 		"""
-		pythoncmd = "python -c \"import platform; print(platform.system()); print(platform.release())\""
-		stdin, stdout, stderr = self.exec_command(pythoncmd, print_output = False, print_input = False)
-		errors = stderr.readlines()
-		if len(errors) > 0:
-			raise RuntimeError(str(errors))
-
-		output = [line.replace('\n', '') for line in stdout.readlines()]
+		output = self.check_output("python -c \"import platform; print(platform.system()); print(platform.release())\"")
 		return { "system" : output[0], "release" : output[1] }
 
-	def environ(self, var:str) -> str:
-		stdin, stdout, stderr = self.exec_command("python -c \"import os; print(os.environ[\'" + str(var) + "\'])\"", print_output = False, print_input = False)
-		errors = stderr.readlines()
-		if len(errors) > 0:
-			raise RuntimeError(str(errors))
+	def _env(self, var:str) -> str:
+		return self.check_output("python -c \"import os; print(os.environ[\'" + str(var) + "\'])\"")[0]
 
-		output = [line.replace('\n', '') for line in stdout.readlines()]
-		return output[0]
+	def _printenv(self) -> dict[str:str]:
+		out = self.check_output("printenv")
+		return {env.split("=")[0] : ''.join(env.split("=")[1:]) for env in out}
+		
+
+		
+
+	
 
 # ------------------ SSHConnector
