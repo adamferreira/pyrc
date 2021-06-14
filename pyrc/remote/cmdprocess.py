@@ -44,6 +44,9 @@ class CommandExecutor:
         _cmd.insert(0, cmd)
         if _CMDEXEC_REMOTE_ENABLED_:
             stdin, stdout, stderr = remote.exec_command(cmd, print_output, print_input)
+            errors = stderr.readlines()
+            if len(errors) > 0:
+                raise RuntimeError(str(errors))
 
             return [line.replace("\n", "") for line in stdout.readlines()]
         else:
