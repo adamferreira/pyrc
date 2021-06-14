@@ -22,11 +22,10 @@ def create_connectors(user_config_file:str, sshkey:str=None) -> 'dict[str:SSHCon
         # Creating user config dictionnary
         user_config = ssh_configs[hostname]
         connectors[hostname] = SSHConnector(
-            hostname=hostname,
             user=user_config["user"],
-            user_config_file=user_config_file,
+            hostname=user_config["hostname"],
             sshkey=sshkey,
-            use_proxy="proxycommand" in user_config,
+            proxycommand=user_config["proxycommand"] if "proxycommand" in user_config else None,
             askpwd = False
         )
     return connectors

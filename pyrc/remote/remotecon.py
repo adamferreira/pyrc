@@ -3,6 +3,10 @@ from scp import SCPClient, SCPException
 import logging
 import getpass
 
+def myprogress(filename, size, sent):
+	filename = filename.decode("utf-8")
+	print(f"{filename} -> {sent}/{size} ({(float(sent)/float(size)*100)}%)")
+
 def strip_stdout(stdout):
 	return stdout.read().decode("utf-8").strip('\n').split('\n')	
 
@@ -14,7 +18,7 @@ class SSHConnector:
 		def __init__(self, remote):
 			self.remote = remote
 			if self.remote is not None and self.remote.is_open():
-				self.load_env()
+				self.__load_env()
 
 		# If a var is already in the dict (assumed loaded from remote)
 		# We return is at is is
@@ -28,58 +32,71 @@ class SSHConnector:
 				return super().__getitem__(key)
 
 		# Get all remote env vars
-		def load_env(self):
+		def __load_env(self):
 			remoteenvs = self.remote._printenv()
 			for key,val in remoteenvs.items():
 				super().__setitem__(key, val)
 
 
+	""" 
+		MEMBERS
+	"""
 	@property
-	def askpwd(self):
-		return self._askpwd
+	def hostname(self) -> str:
+		return self._hostname
 
+	@property
+	def proxycommand(self) -> str:
+		return self._proxycommand
+
+	@property
+	def use_proxy(self) -> bool:
+		return self._proxycommand is not None and self._proxycommand != ""
+
+	@property
+	def user(self) -> str:
+		return str(self._user)
+
+	@property
+	def sshkey(self) -> str:
+		return str(self._sshkey)
+
+	@property
+	def pwd(self):
+		return self._cwd
+	def cd(self, directory:str):
+		self._cwd = directory
+
+	@property
+	def askpwd(self) -> bool:
+		return self._askpwd
 	@askpwd.setter
 	def askpwd(self, askpwd):
 		self._askpwd = askpwd
 
-	def hostmame(self) -> str:
-		return str(self._hostname)
+	@property
+	def environ(self) -> SSHEnvironDict:
+		return self._environ
 
-	def user(self) -> str:
-		return str(self._user)
+	@property
+	def unix(self) -> bool:
+		return self._isunix
 
-	def sshkey(self) -> str:
-		return str(self._sshkey)
 
-	# TODO : remove user_config_file and use_proxy, passe loghostname and proxy command !
-	def __init__(self, hostname, user, user_config_file, sshkey, use_proxy:bool = False, askpwd = False):
-		# Public members
-		self.askpwd:bool = askpwd
-		self.use_proxy:bool = use_proxy
-		self.environ = None
-
-		# Read-only protected members
-		self._hostname:str = hostname
+	def __init__(self, user:str, hostname:str, sshkey:str, proxycommand:str = None, askpwd:bool = False):
 		self._user:str = user
-		self._user_config = None
-
-		
-		self._user_config_file:str = user_config_file
+		self._hostname:str = hostname
+		self._proxycommand:str = proxycommand
 		self._sshkey:str = sshkey
+		self._askpwd:bool = askpwd
+		self._environ:SSHConnector.SSHEnvironDict = None
+		self._isunix:bool = None
+		self._cwd:str = "" # Currend directory
 		self._sshcon = None
 		self._scp = None
-		
-		# Currend directory
-		self._cwd:str = ""
-		
 
 		# Creating remote connection
 		self._sshcon = paramiko.SSHClient()  # will create the object
-		ssh_config = paramiko.SSHConfig.from_path(self._user_config_file)
-
-		# Creating user config dictionnary
-		self._user_config = ssh_config.lookup(self._hostname)
-
 		# Setting up proxy
 		self._sshcon.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # no known_hosts error
 
@@ -95,12 +112,12 @@ class SSHConnector:
 			stdin, stdout, stderr: stdin, stdout, stderr
 		"""
 		if print_input:
-			print("[" + self.user() + "@" + self._hostname + "]", cmd)
+			print("[" + self.user + "@" + self.hostname + "]", cmd)
 		stdin, stdout, stderr = self._sshcon.exec_command("cd " + self._cwd + ";" + cmd)
 		#stdout.channel.recv_exit_status()
 		if print_output:
 			for line in stdout.readlines():
-				print("[" + self.user() + "@" + self._hostname + "] ->", line)
+				print("[" + self.user + "@" + self.hostname + "] ->", line)
 		
 		return stdin, stdout, stderr
 
@@ -113,25 +130,30 @@ class SSHConnector:
 			Opens the remote connection.
 		"""
 		if self.use_proxy:
-			proxy = paramiko.ProxyCommand(self._user_config["proxycommand"])
-			self._sshcon.connect(self._user_config["hostname"], username=self.user(), key_filename=self.sshkey(), sock=proxy)
+			proxy = paramiko.ProxyCommand(self.proxycommand)
+			self._sshcon.connect(self.hostname, username=self.user, key_filename=self.sshkey, sock=proxy)
 		else:
 			if self.askpwd:
 				self._sshcon.connect(
-					self._user_config["hostname"], 
-					username=self.user(), 
-					key_filename=self.sshkey(), 
-					password=getpass.getpass(prompt="Password for " + self.user() + "@" + self._user_config["hostname"] + " : "))
+					self.hostname, 
+					username=self.user, 
+					key_filename=self.sshkey, 
+					password=getpass.getpass(prompt="Password for " + self.user() + "@" + self.hostname + " : "))
 			else:
-				self._sshcon.connect(self._user_config["hostname"], username=self.user(), key_filename=self.sshkey())
+				self._sshcon.connect(self.hostname, username=self.user, key_filename=self.sshkey)
 
 		# SCP connection
-		self._scp = SCPClient(self._sshcon.get_transport())
-
-		self.environ = SSHConnector.SSHEnvironDict(self)
+		self._scp = SCPClient(self._sshcon.get_transport(), progress = myprogress)
+		# Load remote env vars
+		self._environ = SSHConnector.SSHEnvironDict(self)
+		# Load remote system informations 
+		self._isunix = self.platform()["system"] != "Windows"
 
 	def is_open(self):
 		return self._sshcon.get_transport().is_active()
+
+	def is_unix(self) -> bool:
+		return self._isunix
 
 	def close(self):
 		"""[summary]
@@ -157,16 +179,11 @@ class SSHConnector:
 			outlist.append(file.replace('\n', ''))
 		return outlist
 
-	def cd(self, directory):
-		self._cwd = directory
-
-	def pwd(self):
-		return self._cwd
 
 	def remote_file_exists_in_folder(self, folderpath, filename):
 		return filename in self.ls(folderpath)
 
-	def remote_file_exists(self, filepath):
+	def remote_file_exists(self, filepath) -> bool:
 		splitt = filepath.split("/")
 		filename = splitt[len(splitt)-1]
 		folderpath = ""
@@ -175,7 +192,9 @@ class SSHConnector:
 
 		return self.remote_file_exists_in_folder(folderpath, filename)
 
+
 	def upload(self, local_file, remote_path):
+			
 		print("Uploading", local_file, "...")
 		upload = None
 		try:
@@ -269,9 +288,10 @@ class SSHConnector:
 		return { "system" : output[0], "release" : output[1] }
 
 	def _env(self, var:str) -> str:
-		return self.check_output("python -c \"import os; print(os.environ[\'" + str(var) + "\'])\"")[0]
+		return self.check_output(f"python -c \"import os; print(os.environ[\'{var}\'])\"")[0]
 
 	def _printenv(self) -> dict[str:str]:
+		# windows : out = return self.check_output("python -c \"import os; print(os.environ)\"")
 		out = self.check_output("printenv")
 		return {env.split("=")[0] : ''.join(env.split("=")[1:]) for env in out}
 		
