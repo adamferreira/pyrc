@@ -24,6 +24,7 @@ setuptools.setup(
     python_requires=">=3.0",
     install_requires=[
        "paramiko",
-       "scp"
+       "scp",
+       "rich"
    ],
 )
