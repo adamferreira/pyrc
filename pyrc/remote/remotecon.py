@@ -2,10 +2,9 @@ import paramiko
 from scp import SCPClient, SCPException
 import logging
 import getpass
-
-def myprogress(filename, size, sent):
-	filename = filename.decode("utf-8")
-	print(f"{filename} -> {sent}/{size} ({(float(sent)/float(size)*100)}%)")
+import pyrc.local.progress
+import os, rich
+from pathlib import Path
 
 def strip_stdout(stdout):
 	return stdout.read().decode("utf-8").strip('\n').split('\n')	
@@ -101,7 +100,7 @@ class SSHConnector:
 		self._sshcon.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # no known_hosts error
 
 
-	def exec_command(self, cmd:str, print_output:bool = False, print_input:bool = True):
+	def exec_command(self, cmd:str, print_output:bool = False, print_input:bool = False):
 		"""[summary]
 			Execute the given command line on the remote machine.
 		Args:
@@ -138,12 +137,12 @@ class SSHConnector:
 					self.hostname, 
 					username=self.user, 
 					key_filename=self.sshkey, 
-					password=getpass.getpass(prompt="Password for " + self.user() + "@" + self.hostname + " : "))
+					password=getpass.getpass(prompt=f"Password for {self.user}@{self.hostname}:"))
 			else:
 				self._sshcon.connect(self.hostname, username=self.user, key_filename=self.sshkey)
 
 		# SCP connection
-		self._scp = SCPClient(self._sshcon.get_transport(), progress = myprogress)
+		self._scp = SCPClient(self._sshcon.get_transport())
 		# Load remote env vars
 		self._environ = SSHConnector.SSHEnvironDict(self)
 		# Load remote system informations 
@@ -179,6 +178,12 @@ class SSHConnector:
 			outlist.append(file.replace('\n', ''))
 		return outlist
 
+	def join(self, *args):
+		if self.unix:
+			return '/'.join(args)
+		else:
+			return '\\'.join(args)
+
 
 	def remote_file_exists_in_folder(self, folderpath, filename):
 		return filename in self.ls(folderpath)
@@ -192,9 +197,68 @@ class SSHConnector:
 
 		return self.remote_file_exists_in_folder(folderpath, filename)
 
+	def __upload_files(self, local_paths, remote_path):
+		progress = pyrc.local.progress.FileTransferProgress(
+			local_paths, 
+			self.user, self.hostname
+			)
+		progress.start()
+		scp = SCPClient(self._sshcon.get_transport(), progress = progress.file_progress_callback)
+		scp.put(local_paths, recursive=False, remote_path = remote_path)
+		progress.stop()
+		scp.close()
+	
+	def __upload_folder(self, local_realdir:str, dir_prefix:str, folder_files:'List[str]', remote_path:str):
+		remote_path = self.join(remote_path, dir_prefix)
+		if self.remote_file_exists(remote_path):
+			self.rm(remote_path)
+		self.mkdir(remote_path)
 
-	def upload(self, local_file, remote_path):
-			
+		rich.print(f"Uploading folder {local_realdir} to {self.user}@{self.hostname}:{remote_path}")
+		progress = pyrc.local.progress.FileTransferProgress(
+			[os.path.join(local_realdir, file) for file in folder_files], 
+			self.user, self.hostname
+			)
+		progress.start()
+		scp = SCPClient(self._sshcon.get_transport(), progress = progress.file_progress_callback)
+		scp.put([
+				os.path.join(local_realdir, file) for file in folder_files], 
+				recursive=False, remote_path = remote_path
+				)
+		progress.stop()
+		scp.close()
+
+	def __upload_folder_recur(self, local_root:str, remote_path:str):
+		tree = pyrc.local.system.list_all_recursivly(local_root)
+		for directory in tree:
+			dir_commom = os.path.commonprefix([Path(local_root).parent.absolute(), directory])
+			rich.print(f"Root={local_root} directory={directory} commum={dir_commom} dir_prefix={os.path.relpath(directory, dir_commom)}")
+			self.__upload_folder(
+				local_realdir = directory,
+				dir_prefix = os.path.relpath(directory, dir_commom),
+				folder_files = tree[directory],
+				remote_path = remote_path
+			)
+
+	def upload(self, local_path:str, remote_path:str):
+		local_path = os.path.realpath(local_path)
+		if os.path.isdir(local_path):
+			self.__upload_folder_recur(local_path, remote_path)
+		if os.path.isfile(local_path):
+			self.__upload_files([local_path], remote_path)
+		
+
+	def upload1(self, local_file, remote_path = None):
+		#remote_path = remote_path if remote_path is not None else self._cwd
+		#look = pyrc.local.system.list_all_recursivly(local_file)
+		#print(look)
+		#total = sum([sum([os.path.getsize(os.path.join(folder, f)) for f in look[folder]]) for folder in look])
+		#print(total, pyrc.local.system.get_size(local_file))	
+		#return
+		#progress.start()
+		#progress.update(task_id, total=os.path.getsize(local_file))
+		#progress.start_task(task_id)
+		start = time.time()
 		print("Uploading", local_file, "...")
 		upload = None
 		try:
@@ -210,11 +274,12 @@ class SSHConnector:
 			raise error
 		finally:
 			#logger.info(f'Uploaded {file} to {self.remote_path}')
+			end = time.time()
+			print(end - start)
 			print("Uploaded", local_file, "to", remote_path)
-			return upload		
-
-	def upload_file(self, local_file):
-		return self.upload(local_file, self._cwd)
+			#progress.console.log(f"Uploaded {local_file}")
+			#progress.stop()
+			return upload
 
 	def download(self, remote_file_path, local_file_path = "."):
 		"""Recursivly download files/folder from remote host.
