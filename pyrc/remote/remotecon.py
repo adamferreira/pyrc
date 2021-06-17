@@ -2,7 +2,9 @@ import paramiko
 from scp import SCPClient, SCPException
 import logging
 import getpass
-import pyrc.local.progress
+import pyrc.event.progress as pyprogress
+import pyrc.event.event as pyevent
+import pyrc.local
 import os, rich
 from pathlib import Path
 
@@ -179,10 +181,7 @@ class SSHConnector:
 		return outlist
 
 	def join(self, *args):
-		if self.unix:
-			return '/'.join(args)
-		else:
-			return '\\'.join(args)
+		return '/'.join(args) if self.unix else '\\'.join(args)
 
 
 	def remote_file_exists_in_folder(self, folderpath, filename):
@@ -197,42 +196,47 @@ class SSHConnector:
 
 		return self.remote_file_exists_in_folder(folderpath, filename)
 
-	def __upload_files(self, local_paths, remote_path):
-		progress = pyrc.local.progress.FileTransferProgress(
-			local_paths, 
-			self.user, self.hostname
-			)
-		progress.start()
-		scp = SCPClient(self._sshcon.get_transport(), progress = progress.file_progress_callback)
+	def __upload_files(self, local_paths:'List[str]', remote_path:str):
+		"""[summary]
+
+		Args:
+			local_paths (List[str]): Absolute file paths
+			remote_path (str): Absolute remote path
+		"""
+		event = pyevent.FileProgressEvent(self, local_paths)
+		event.transfer_begin()
+		scp = SCPClient(self._sshcon.get_transport(), progress = event.progress)
 		scp.put(local_paths, recursive=False, remote_path = remote_path)
-		progress.stop()
+		event.transfer_end()
 		scp.close()
 	
 	def __upload_folder(self, local_realdir:str, dir_prefix:str, folder_files:'List[str]', remote_path:str):
+		"""[summary]
+
+		Args:
+			local_realdir (str): [description]
+			dir_prefix (str): [description]
+			folder_files (List[str]): [description]
+			remote_path (str): [description]
+		"""
 		remote_path = self.join(remote_path, dir_prefix)
 		if self.remote_file_exists(remote_path):
 			self.rm(remote_path)
 		self.mkdir(remote_path)
 
-		rich.print(f"Uploading folder {local_realdir} to {self.user}@{self.hostname}:{remote_path}")
-		progress = pyrc.local.progress.FileTransferProgress(
-			[os.path.join(local_realdir, file) for file in folder_files], 
-			self.user, self.hostname
-			)
-		progress.start()
-		scp = SCPClient(self._sshcon.get_transport(), progress = progress.file_progress_callback)
-		scp.put([
-				os.path.join(local_realdir, file) for file in folder_files], 
-				recursive=False, remote_path = remote_path
-				)
-		progress.stop()
-		scp.close()
+		rich.print(f"Uploading directory {local_realdir} to {self.user}@{self.hostname}:{remote_path}")
+		self.__upload_files(local_paths=[os.path.join(local_realdir, file) for file in folder_files], remote_path=remote_path)
 
-	def __upload_folder_recur(self, local_root:str, remote_path:str):
-		tree = pyrc.local.system.list_all_recursivly(local_root)
+	def __upload_tree(self, directory_realpath:str, remote_path:str):
+		"""[summary]
+
+		Args:
+			directory_realpath (str): [description]
+			remote_path (str): [description]
+		"""
+		tree = pyrc.local.system.list_all_recursivly(directory_realpath)
 		for directory in tree:
-			dir_commom = os.path.commonprefix([Path(local_root).parent.absolute(), directory])
-			rich.print(f"Root={local_root} directory={directory} commum={dir_commom} dir_prefix={os.path.relpath(directory, dir_commom)}")
+			dir_commom = os.path.commonprefix([Path(directory_realpath).parent.absolute(), directory])
 			self.__upload_folder(
 				local_realdir = directory,
 				dir_prefix = os.path.relpath(directory, dir_commom),
@@ -240,12 +244,18 @@ class SSHConnector:
 				remote_path = remote_path
 			)
 
-	def upload(self, local_path:str, remote_path:str):
-		local_path = os.path.realpath(local_path)
-		if os.path.isdir(local_path):
-			self.__upload_folder_recur(local_path, remote_path)
-		if os.path.isfile(local_path):
-			self.__upload_files([local_path], remote_path)
+	def upload(self, local_realpath:str, remote_path:str):
+		"""[summary]
+
+		Args:
+			local_realpath (str): [description]
+			remote_path (str): [description]
+		"""
+		local_realpath = os.path.realpath(local_realpath)
+		if os.path.isdir(local_realpath):
+			self.__upload_tree(local_realpath, remote_path)
+		if os.path.isfile(local_realpath):
+			self.__upload_files([local_realpath], remote_path)
 		
 
 	def upload1(self, local_file, remote_path = None):

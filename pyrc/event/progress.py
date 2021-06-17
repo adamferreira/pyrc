@@ -50,20 +50,24 @@ class FileTransferTask():
             self.end()
 
 class FileTransferProgress():
+    @staticmethod
+    def getLayout():
+        return Progress(
+	                SpinnerColumn(),
+                    TextColumn("[bold blue]{task.fields[filename]}", justify="left"),
+                    BarColumn(bar_width=None),
+                    "[progress.percentage]{task.percentage:>3.1f}%",
+                    "•",
+                    DownloadColumn(),
+                    "•",
+                    TransferSpeedColumn(),
+                    "•",
+                    TimeRemainingColumn(),
+                    "•",
+                    TextColumn("[bold green]{task.fields[user]}@{task.fields[hostname]}"))
+
     def __init__(self, file, user:str, hostname:str):
-        self.__richfileprogress = Progress(
-	        SpinnerColumn(),
-            TextColumn("[bold blue]{task.fields[filename]}", justify="left"),
-            BarColumn(bar_width=None),
-            "[progress.percentage]{task.percentage:>3.1f}%",
-            "•",
-            DownloadColumn(),
-            "•",
-            TransferSpeedColumn(),
-            "•",
-            TimeRemainingColumn(),
-            "•",
-            TextColumn("[bold green]{task.fields[user]}@{task.fields[hostname]}"))
+        self.__richfileprogress = FileTransferProgress.getLayout()
 
         self.__tasks = {}
         self.__user = user
@@ -94,7 +98,7 @@ class FileTransferProgress():
         func(self)
 
 
-
+"""
 class DirectoryTransferProgress():
     def __init__(self, dir:str, files:'List[str]', user:str, hostname:str):
         self.__overallrichprogress = Progress(
@@ -152,3 +156,4 @@ class DirectoryTransferProgress():
 
     def set_filesent_callback(self, func):
         func(self)
+"""
