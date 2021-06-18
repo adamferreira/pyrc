@@ -1,3 +1,4 @@
+import rich
 import pyrc.event.progress as pyprogress
 
 class Event(object):
@@ -32,12 +33,13 @@ class FileTransferEvent(Event):
     def progress(self, *args, **kwargs):
         return None
 
-class FileProgressEvent(FileTransferEvent):
+class RichRemoteFileTransferEvent(FileTransferEvent):
     def __init__(self, caller, *args, **kwargs):
         super().__init__(caller)
-        self.__progress = pyprogress.FileTransferProgress(*args, self.caller.user, self.caller.hostname)
+        self.__progress = None
 
     def transfer_begin(self, *args, **kwargs):
+        self.__progress = pyprogress.RemoteFileTransfer(*args, self.caller.user, self.caller.hostname)
         return self.__progress.start()
 
     def transfer_end(self, *args, **kwargs):
@@ -49,3 +51,11 @@ class FileProgressEvent(FileTransferEvent):
     def __progress_scp(self, filename:str, size:float, sent:float):
         return self.__progress.file_progress_callback(filename, size, sent)
 
+class RichRemoteDirTransferEvent(FileTransferEvent):
+    def __init__(self, caller, *args, **kwargs):
+        super().__init__(caller)
+
+    def transfer_begin(self, *args, **kwargs):
+        __local_dir = args[0]
+        __remote_dir = args[1]
+        rich.print(f"Uploading directory {__local_dir} to {self.caller.user}@{self.caller.hostname}:{__remote_dir}")
