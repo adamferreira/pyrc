@@ -9,6 +9,15 @@ class Event(object):
     def __init__(self, caller, *args, **kwargs):
         self.__caller = caller 
 
+    def begin(self, *args, **kwargs):
+        return None
+
+    def end(self, *args, **kwargs):
+        return None
+
+    def progress(self, *args, **kwargs):
+        return None
+
 class CommandEvent(Event):
     def __init__(self, caller, *args, **kwargs):
         super().__init__(self, caller) 
@@ -24,38 +33,35 @@ class FileTransferEvent(Event):
     def __init__(self, caller, *args, **kwargs):
         super().__init__(caller) 
 
-    def transfer_begin(self, *args, **kwargs):
-        return None
-
-    def transfer_end(self, *args, **kwargs):
-        return None
-
-    def progress(self, *args, **kwargs):
-        return None
-
 class RichRemoteFileTransferEvent(FileTransferEvent):
     def __init__(self, caller, *args, **kwargs):
         super().__init__(caller)
         self.__progress = None
 
-    def transfer_begin(self, *args, **kwargs):
+    def begin(self, *args, **kwargs):
         self.__progress = pyprogress.RemoteFileTransfer(*args, self.caller.user, self.caller.hostname)
         return self.__progress.start()
 
-    def transfer_end(self, *args, **kwargs):
+    def end(self, *args, **kwargs):
         return self.__progress.stop()
 
     def progress(self, *args, **kwargs):
-        return self.__progress_scp(args[0], args[1], args[2])
+        self.__progress.file_progress(filename = args[0], size = args[1], sent = args[2])
 
-    def __progress_scp(self, filename:str, size:float, sent:float):
-        return self.__progress.file_progress_callback(filename, size, sent)
-
-class RichRemoteDirTransferEvent(FileTransferEvent):
+class RichRemoteDirUploadEvent(FileTransferEvent):
     def __init__(self, caller, *args, **kwargs):
         super().__init__(caller)
 
-    def transfer_begin(self, *args, **kwargs):
+    def begin(self, *args, **kwargs):
         __local_dir = args[0]
         __remote_dir = args[1]
         rich.print(f"Uploading directory {__local_dir} to {self.caller.user}@{self.caller.hostname}:{__remote_dir}")
+
+class RichRemoteDirDownloadEvent(FileTransferEvent):
+    def __init__(self, caller, *args, **kwargs):
+        super().__init__(caller)
+
+    def begin(self, *args, **kwargs):
+        __local_dir = args[0]
+        __remote_dir = args[1]
+        rich.print(f"Downloading directory {self.caller.user}@{self.caller.hostname}:{__remote_dir} to {__local_dir}")

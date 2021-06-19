@@ -84,6 +84,25 @@ class SSHConnector:
 		return self._isunix
 
 
+
+
+	@property 
+	def filesupload_event(self):
+		return self.__filesupload_event
+
+	@property 
+	def dirupload_event(self):
+		return self.__dirupload_event
+
+	@property 
+	def filesdownload_event(self):
+		return self.__filesdownload_event
+
+	@property 
+	def dirdownload_event(self):
+		return self.__dirdownload_event
+
+
 	def __init__(self, user:str, hostname:str, sshkey:str, proxycommand:str = None, askpwd:bool = False):
 		self._user:str = user
 		self._hostname:str = hostname
@@ -100,6 +119,13 @@ class SSHConnector:
 		self._sshcon = paramiko.SSHClient()  # will create the object
 		# Setting up proxy
 		self._sshcon.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # no known_hosts error
+
+
+		# Events
+		self.__filesupload_event = pyevent.RichRemoteFileTransferEvent(self)
+		self.__dirupload_event = pyevent.RichRemoteDirUploadEvent(self)
+		self.__filesdownload_event = pyevent.FileTransferEvent(self)
+		self.__dirdownload_event = pyevent.RichRemoteDirDownloadEvent(self)
 
 
 	def exec_command(self, cmd:str, print_output:bool = False, print_input:bool = False):
@@ -153,9 +179,6 @@ class SSHConnector:
 	def is_open(self):
 		return self._sshcon.get_transport().is_active()
 
-	def is_unix(self) -> bool:
-		return self._isunix
-
 	def close(self):
 		"""[summary]
 			Close remote connection.
@@ -203,11 +226,10 @@ class SSHConnector:
 			local_paths (List[str]): Absolute file paths
 			remote_path (str): Absolute remote path
 		"""
-		event = pyevent.FileProgressEvent(self, local_paths)
-		event.transfer_begin()
-		scp = SCPClient(self._sshcon.get_transport(), progress = event.progress)
+		self.filesupload_event.begin(local_paths)
+		scp = SCPClient(self._sshcon.get_transport(), progress = self.filesupload_event.progress)
 		scp.put(local_paths, recursive=False, remote_path = remote_path)
-		event.transfer_end()
+		self.filesupload_event.end()
 		scp.close()
 	
 	def __upload_folder(self, local_realdir:str, dir_prefix:str, folder_files:'List[str]', remote_path:str):
@@ -224,8 +246,9 @@ class SSHConnector:
 			self.rm(remote_path)
 		self.mkdir(remote_path)
 
-		rich.print(f"Uploading directory {local_realdir} to {self.user}@{self.hostname}:{remote_path}")
+		self.dirupload_event.begin(local_realdir, remote_path)
 		self.__upload_files(local_paths=[os.path.join(local_realdir, file) for file in folder_files], remote_path=remote_path)
+		self.dirupload_event.end()
 
 	def __upload_tree(self, directory_realpath:str, remote_path:str):
 		"""[summary]
@@ -256,40 +279,6 @@ class SSHConnector:
 			self.__upload_tree(local_realpath, remote_path)
 		if os.path.isfile(local_realpath):
 			self.__upload_files([local_realpath], remote_path)
-		
-
-	def upload1(self, local_file, remote_path = None):
-		#remote_path = remote_path if remote_path is not None else self._cwd
-		#look = pyrc.local.system.list_all_recursivly(local_file)
-		#print(look)
-		#total = sum([sum([os.path.getsize(os.path.join(folder, f)) for f in look[folder]]) for folder in look])
-		#print(total, pyrc.local.system.get_size(local_file))	
-		#return
-		#progress.start()
-		#progress.update(task_id, total=os.path.getsize(local_file))
-		#progress.start_task(task_id)
-		start = time.time()
-		print("Uploading", local_file, "...")
-		upload = None
-		try:
-			self._scp.put(
-				local_file,
-				recursive=True,
-				remote_path = remote_path
-			)
-			upload = local_file
-		except SCPException as error:
-			#logger.error(error)
-			print(error)
-			raise error
-		finally:
-			#logger.info(f'Uploaded {file} to {self.remote_path}')
-			end = time.time()
-			print(end - start)
-			print("Uploaded", local_file, "to", remote_path)
-			#progress.console.log(f"Uploaded {local_file}")
-			#progress.stop()
-			return upload
 
 	def download(self, remote_file_path, local_file_path = "."):
 		"""Recursivly download files/folder from remote host.
@@ -314,7 +303,6 @@ class SSHConnector:
 
 	def zip(self, remote_path, remote_archive, flag = ""):
 		stdin, stdout, stderr = self.exec_command("zip " + flag + " \"" + remote_archive + "\" \"" + remote_path + "\"", print_output = True)
-		#stdin, stdout, stderr = self.exec_command("zip " + flag + " " + remote_archive + " " + remote_path, print_output = True)
 
 	def unzip(self, remote_archive, remote_path, flag = ""):
 		stdin, stdout, stderr = self.exec_command("unzip " + flag + " \"" + remote_archive + "\" -d \"" + remote_path + "\"", print_output = True)
