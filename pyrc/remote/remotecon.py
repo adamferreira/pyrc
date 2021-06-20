@@ -5,11 +5,10 @@ import getpass
 import pyrc.event.progress as pyprogress
 import pyrc.event.event as pyevent
 import pyrc.local
+from pyrc.local.system import *
 import os, rich
 from pathlib import Path
 
-def strip_stdout(stdout):
-	return stdout.read().decode("utf-8").strip('\n').split('\n')	
 
 # ------------------ SSHConnector
 class SSHConnector:
@@ -102,6 +101,10 @@ class SSHConnector:
 	def dirdownload_event(self):
 		return self.__dirdownload_event
 
+	@property
+	def cmd_event(self):
+		return self.__cmd_event
+
 
 	def __init__(self, user:str, hostname:str, sshkey:str, proxycommand:str = None, askpwd:bool = False):
 		self._user:str = user
@@ -126,31 +129,21 @@ class SSHConnector:
 		self.__dirupload_event = pyevent.RichRemoteDirUploadEvent(self)
 		self.__filesdownload_event = pyevent.FileTransferEvent(self)
 		self.__dirdownload_event = pyevent.RichRemoteDirDownloadEvent(self)
+		self.__cmd_event = pyevent.CommandPrintEvent(self)
 
-
-	def exec_command(self, cmd:str, print_output:bool = False, print_input:bool = False):
-		"""[summary]
-			Execute the given command line on the remote machine.
-		Args:
-			cmd (str): Command line to execute.
-			print_output (bool, optional): Boolean to print or not remote stdout to local stdout]. Defaults to False.
-
-		Returns:
-			stdin, stdout, stderr: stdin, stdout, stderr
-		"""
-		if print_input:
-			print("[" + self.user + "@" + self.hostname + "]", cmd)
+	def __exec_command(self, cmd:str):
 		stdin, stdout, stderr = self._sshcon.exec_command("cd " + self._cwd + ";" + cmd)
-		#stdout.channel.recv_exit_status()
-		if print_output:
-			for line in stdout.readlines():
-				print("[" + self.user + "@" + self.hostname + "] ->", line)
-		
 		return stdin, stdout, stderr
 
+	def exec_command(self, cmd:str, event:pyevent.Event = None):
+		stdin, stdout, stderr = self.__exec_command("cd " + self._cwd + ";" + cmd)
+		# Blocking event
+		event = self.__cmd_event if event is None else event
+		event.begin(cmd, stdin, stdout, stderr)
+		return event.end()
+
 	def check_output(self, cmd:str):
-		_, stdout, _ = self.exec_command(cmd, print_output=False, print_input=False)
-		return strip_stdout(stdout)
+		return self.exec_command(cmd=cmd, event = pyevent.CommandStoreEvent(self))
 
 	def open(self):
 		"""[summary]
@@ -198,7 +191,7 @@ class SSHConnector:
 			list: List of all the remotes file names.
 		"""
 		outlist = []
-		stdin, stdout, stderr = self.exec_command("ls " + folderpath)
+		stdin, stdout, stderr = self.__exec_command("ls " + folderpath)
 		for file in stdout.readlines():
 			outlist.append(file.replace('\n', ''))
 		return outlist
@@ -232,40 +225,26 @@ class SSHConnector:
 		self.filesupload_event.end()
 		scp.close()
 	
-	def __upload_folder(self, local_realdir:str, dir_prefix:str, folder_files:'List[str]', remote_path:str):
+	def __upload_node(self, localnode:FileSystemTree, remote_path:str):
 		"""[summary]
 
 		Args:
-			local_realdir (str): [description]
-			dir_prefix (str): [description]
-			folder_files (List[str]): [description]
+			localnode (FileSystemTree): [description]
 			remote_path (str): [description]
 		"""
-		remote_path = self.join(remote_path, dir_prefix)
+
 		if self.remote_file_exists(remote_path):
 			self.rm(remote_path)
 		self.mkdir(remote_path)
 
-		self.dirupload_event.begin(local_realdir, remote_path)
-		self.__upload_files(local_paths=[os.path.join(local_realdir, file) for file in folder_files], remote_path=remote_path)
+		self.dirupload_event.begin(localnode.realpath(), remote_path)
+		self.__upload_files(local_paths=localnode.realfiles(), remote_path=remote_path)
 		self.dirupload_event.end()
 
-	def __upload_tree(self, directory_realpath:str, remote_path:str):
-		"""[summary]
-
-		Args:
-			directory_realpath (str): [description]
-			remote_path (str): [description]
-		"""
-		tree = pyrc.local.system.list_all_recursivly(directory_realpath)
-		for directory in tree:
-			dir_commom = os.path.commonprefix([Path(directory_realpath).parent.absolute(), directory])
-			self.__upload_folder(
-				local_realdir = directory,
-				dir_prefix = os.path.relpath(directory, dir_commom),
-				folder_files = tree[directory],
-				remote_path = remote_path
-			)
+	def __upload_tree(self, localtree:FileSystemTree, remote_path:str):
+		for n in localtree.nodes():
+			self.__upload_node(localnode = n, remote_path = self.join(remote_path, n.relpath()))
+			
 
 	def upload(self, local_realpath:str, remote_path:str):
 		"""[summary]
@@ -276,7 +255,8 @@ class SSHConnector:
 		"""
 		local_realpath = os.path.realpath(local_realpath)
 		if os.path.isdir(local_realpath):
-			self.__upload_tree(local_realpath, remote_path)
+			self.__upload_tree(get_tree(local_realpath), remote_path)
+
 		if os.path.isfile(local_realpath):
 			self.__upload_files([local_realpath], remote_path)
 
@@ -296,16 +276,16 @@ class SSHConnector:
 			print("Downloaded", remote_file_path, "to", local_file_path)
 
 	def rm(self, remote_path, flag = ""):
-		stdin, stdout, stderr = self.exec_command("rm " + flag + " " + remote_path)
+		stdin, stdout, stderr = self.__exec_command("rm " + flag + " " + remote_path)
 
 	def mkdir(self, remote_path):
-		stdin, stdout, stderr = self.exec_command("mkdir " + remote_path)
+		stdin, stdout, stderr = self.__exec_command("mkdir " + remote_path)
 
 	def zip(self, remote_path, remote_archive, flag = ""):
-		stdin, stdout, stderr = self.exec_command("zip " + flag + " \"" + remote_archive + "\" \"" + remote_path + "\"", print_output = True)
+		stdin, stdout, stderr = self.__exec_command("zip " + flag + " \"" + remote_archive + "\" \"" + remote_path + "\"", print_output = True)
 
 	def unzip(self, remote_archive, remote_path, flag = ""):
-		stdin, stdout, stderr = self.exec_command("unzip " + flag + " \"" + remote_archive + "\" -d \"" + remote_path + "\"", print_output = True)
+		stdin, stdout, stderr = self.__exec_command("unzip " + flag + " \"" + remote_archive + "\" -d \"" + remote_path + "\"", print_output = True)
 
 	def compress_folder(self, remote_folder_path, sep = "/"):
 		if self.remote_file_exists(remote_folder_path):

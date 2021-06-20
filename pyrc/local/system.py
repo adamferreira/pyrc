@@ -1,5 +1,97 @@
 import os
+from posixpath import basename, commonpath
 import shutil
+from pathlib import Path
+
+class FileSystemTree(object):pass
+class FileSystemTree(object):
+	def __init__(self, root:str, parent:FileSystemTree=None, files:'List[str]'=[], dirs:'Dict[str,FileSystemTree]'={}):
+		self.root = root
+		self.parent = parent
+		self.files = files
+		self.dirs = dirs
+		self.isunix = False
+
+		if parent is None:
+			self.level = 0
+		else:
+			self.level = parent.level + 1
+
+	def __getitem__(self, items):
+		return self.dirs[items]
+
+	def __setitem__(self, item, data):
+		self.dirs[item] = data
+
+	def __str__(self):
+		level = self.level
+		indent = ' ' * 4 * (level)
+		string = "".join(['{}{}/'.format(indent, self.root), '\n'])
+		subindent = ' ' * 4 * (level + 1)
+		for f in self.files:
+			string = "".join([string, '{}{}'.format(subindent, f), '\n'])
+
+		for d in self.dirs.values():
+			string = "".join([string, str(d), '\n'])
+
+		return string
+
+	def nodes(self) -> 'List[FileSystemTree]':
+		nodes = [self]
+		stack = list(self.dirs.values())
+		
+		while len(stack) > 0:
+			n = stack.pop()
+			nodes.append(n)
+			
+			stack.extend(n.dirs.values())
+
+		return sorted(nodes, key=lambda x: int(x.level))
+
+	def realfiles(self):
+		return [os.path.join(self.realpath(), f) for f in self.files]
+
+	def realpath(self):
+		return self.root
+
+	def relpath(self)->str:
+		ancestors = self.ancestors()
+		ancestors.reverse()
+		ancestors.append(self)
+		return os.path.join(*[n.basename() for n in ancestors])
+
+	def basename(self):
+		return os.path.basename(self.realpath())
+
+	def ancestors(self) -> 'List[FileSystemTree]':
+		ancestors = []
+		p = self.parent
+		while p is not None:
+			ancestors.append(p)
+			p = p.parent
+
+		return ancestors
+
+	def rootnode(self) -> FileSystemTree:
+		ancestors = self.ancestors()
+		if len(ancestors) == 0:
+			return self
+		else:
+			return ancestors[-1]
+
+
+	@staticmethod
+	def get_tree(directory:str, parent = None):
+		tree_root = FileSystemTree(root = os.path.realpath(directory), parent=parent, files=[], dirs={})
+		for root, dirs, files in os.walk(tree_root.realpath()):
+			tree_root.files = files.copy()
+			for dir in dirs :
+				tree_root.dirs[dir] = FileSystemTree.get_tree(os.path.join(root, dir), tree_root) 
+				#FileSystemTree(root = os.path.join(root, dir), parent=None, files=[], dirs={})
+			
+			return tree_root
+
+
 
 def _create_directory(dir_path):
     os.mkdir(dir_path)
@@ -72,6 +164,18 @@ def list_all_recursivly(folder, ext = None, files_to_exclude = []):
 						files[root].append(filename)
 
 	return files
+
+def list_files(startpath):
+    for root, dirs, files in os.walk(startpath):
+        level = root.replace(startpath, '').count(os.sep)
+        indent = ' ' * 4 * (level)
+        print('{}{}/'.format(indent, os.path.basename(root)))
+        subindent = ' ' * 4 * (level + 1)
+        for f in files:
+            print('{}{}'.format(subindent, f))
+
+def get_tree(directory):
+	return FileSystemTree.get_tree(directory)
 
 def get_size(start_path = '.'):
 	total_size = 0

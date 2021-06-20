@@ -18,16 +18,29 @@ class Event(object):
     def progress(self, *args, **kwargs):
         return None
 
-class CommandEvent(Event):
+class CommandPrintEvent(Event):
     def __init__(self, caller, *args, **kwargs):
-        super().__init__(self, caller) 
+        super().__init__(caller) 
 
-    def new_line(self, line:str):
+    def progress(self, line):
         print(line)
 
-    def submitted(self, cmd, stdin, stdout, stderr):
-        for line in stdout.readline():
-            self.new_line(line)
+    def begin(self, cmd, stdin, stdout, stderr):
+        print(f"{self.caller.user}@{self.caller.hostname} -> {cmd}")
+        while not stdout.channel.exit_status_ready():
+            self.progress(stdout.readline().strip('\n'))
+
+class CommandStoreEvent(Event):
+    def __init__(self, caller, *args, **kwargs):
+        super().__init__(caller)
+        self.__lines = [] 
+        
+    def begin(self, cmd, stdin, stdout, stderr):
+        self.__lines = stdout.read().decode("utf-8").strip('\n').split('\n')
+
+    def end(self):
+        return self.__lines
+
 
 class FileTransferEvent(Event):
     def __init__(self, caller, *args, **kwargs):
