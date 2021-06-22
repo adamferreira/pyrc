@@ -5,7 +5,7 @@ import getpass
 import pyrc.event.progress as pyprogress
 import pyrc.event.event as pyevent
 import pyrc.local
-from pyrc.local.system import *
+from pyrc.local.system import FileSystem, FileSystemTree
 import os, rich
 from pathlib import Path, PosixPath, PureWindowsPath, PurePosixPath, WindowsPath
 
@@ -79,16 +79,8 @@ class SSHConnector:
 		return self._environ
 
 	@property
-	def ostype(self) -> OSTYPE:
-		return self.__ostype
-
-	@ostype.setter
-	def ostype(self, type:OSTYPE):
-		self.__ostype = type
-		if type == OSTYPE.WINDOWS:
-			self.__path = WindowsPath()
-		else:
-			self.__path = PosixPath()
+	def path(self) -> FileSystem:
+		return self.__path
 
 	@property 
 	def filesupload_event(self):
@@ -123,8 +115,7 @@ class SSHConnector:
 		self._scp = None
 
 		# os related
-		self.__ostype:OSTYPE = None
-		self.__path:Path = None
+		self.__path:FileSystem = None
 
 		# Creating remote connection
 		self._sshcon = paramiko.SSHClient()  # will create the object
@@ -174,14 +165,10 @@ class SSHConnector:
 		self._scp = SCPClient(self._sshcon.get_transport())
 		# Load remote env vars
 		self._environ = SSHConnector.SSHEnvironDict(self)
-		# Load remote system informations 
-		system = self.platform()["system"]
-		if system == "Windows":
-			self.ostype = OSTYPE.WINDOWS
-		elif system == "Linux":
-			self.ostype = OSTYPE.LINUX
-		else:
-			self.ostype = OSTYPE.UNKNOW
+		
+		# Load file system now that the connexion is open
+		self.__path = FileSystem(self)
+		
 
 	def is_open(self):
 		return self._sshcon.get_transport().is_active()

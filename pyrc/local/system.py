@@ -1,10 +1,11 @@
-import os
+import os, platform
 import shutil
 from enum import Enum
-from pathlib import Path, PureWindowsPath, PurePosixPath
+from pathlib import Path, PosixPath, WindowsPath
 
 class FileSystemTree(object):pass
-class FileSystemPath(object):pass
+class FileSystem(object):pass
+class SSHConnector(object):pass 
 
 class OSTYPE(Enum):
 	LINUX = 1
@@ -98,6 +99,50 @@ class FileSystemTree(object):
 				#FileSystemTree(root = os.path.join(root, dir), parent=None, files=[], dirs={})
 			
 			return tree_root
+
+class FileSystem(object):
+	@property
+	def ostype(self) -> OSTYPE:
+		return self.__ostype
+
+	def is_unix(self) -> bool:
+		return self.ostype == OSTYPE.LINUX or self.ostype == OSTYPE.MACOS
+
+	@ostype.setter
+	def ostype(self, type:OSTYPE):
+		self.__ostype = type
+		if not self.is_unix():
+			self.__path = WindowsPath()
+		else:
+			self.__path = PosixPath()
+
+	def set_remote(self, remote:SSHConnector):
+		if remote is not None and not remote.is_open():
+			raise RuntimeError("Remote connector must be open")
+		self.__remote = remote
+
+	def __init__(self, remote:SSHConnector = None):
+		self.__remote:SSHConnector = None
+		self.__path:Path = None
+		self.__ostype:OSTYPE = None
+
+		self.set_remote(remote)
+
+		if remote is not None:
+			system = self.__remote.platform()["system"]
+		else:
+			system = platform.system()
+		
+		# Load remote system informations 
+		if system == "Windows":
+			self.ostype = OSTYPE.WINDOWS
+		elif system == "Linux":
+			self.ostype = OSTYPE.LINUX
+		elif system == "Darwin":
+			self.ostype = OSTYPE.MACOS
+		else:
+			self.ostype = OSTYPE.UNKNOW
+			
 
 
 
