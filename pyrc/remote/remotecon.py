@@ -7,7 +7,7 @@ import pyrc.event.event as pyevent
 import pyrc.local
 from pyrc.local.system import *
 import os, rich
-from pathlib import Path
+from pathlib import Path, PosixPath, PureWindowsPath, PurePosixPath, WindowsPath
 
 
 # ------------------ SSHConnector
@@ -79,11 +79,16 @@ class SSHConnector:
 		return self._environ
 
 	@property
-	def unix(self) -> bool:
-		return self._isunix
+	def ostype(self) -> OSTYPE:
+		return self.__ostype
 
-
-
+	@ostype.setter
+	def ostype(self, type:OSTYPE):
+		self.__ostype = type
+		if type == OSTYPE.WINDOWS:
+			self.__path = WindowsPath()
+		else:
+			self.__path = PosixPath()
 
 	@property 
 	def filesupload_event(self):
@@ -113,10 +118,13 @@ class SSHConnector:
 		self._sshkey:str = sshkey
 		self._askpwd:bool = askpwd
 		self._environ:SSHConnector.SSHEnvironDict = None
-		self._isunix:bool = None
 		self._cwd:str = "" # Currend directory
 		self._sshcon = None
 		self._scp = None
+
+		# os related
+		self.__ostype:OSTYPE = None
+		self.__path:Path = None
 
 		# Creating remote connection
 		self._sshcon = paramiko.SSHClient()  # will create the object
@@ -167,7 +175,13 @@ class SSHConnector:
 		# Load remote env vars
 		self._environ = SSHConnector.SSHEnvironDict(self)
 		# Load remote system informations 
-		self._isunix = self.platform()["system"] != "Windows"
+		system = self.platform()["system"]
+		if system == "Windows":
+			self.ostype = OSTYPE.WINDOWS
+		elif system == "Linux":
+			self.ostype = OSTYPE.LINUX
+		else:
+			self.ostype = OSTYPE.UNKNOW
 
 	def is_open(self):
 		return self._sshcon.get_transport().is_active()

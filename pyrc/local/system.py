@@ -1,9 +1,17 @@
 import os
-from posixpath import basename, commonpath
 import shutil
-from pathlib import Path
+from enum import Enum
+from pathlib import Path, PureWindowsPath, PurePosixPath
 
 class FileSystemTree(object):pass
+class FileSystemPath(object):pass
+
+class OSTYPE(Enum):
+	LINUX = 1
+	MACOS = 2
+	WINDOWS = 3
+	UNKNOW = 4
+
 class FileSystemTree(object):
 	def __init__(self, root:str, parent:FileSystemTree=None, files:'List[str]'=[], dirs:'Dict[str,FileSystemTree]'={}):
 		self.root = root
