@@ -108,6 +108,9 @@ class FileSystem(object):
 	def is_unix(self) -> bool:
 		return self.ostype == OSTYPE.LINUX or self.ostype == OSTYPE.MACOS
 
+	def is_remote(self) -> bool:
+		return self.__remote is not None
+
 	@ostype.setter
 	def ostype(self, type:OSTYPE):
 		self.__ostype = type
@@ -117,9 +120,10 @@ class FileSystem(object):
 			self.__path = PosixPath()
 
 	def set_remote(self, remote:SSHConnector):
-		if remote is not None and not remote.is_open():
+		if self.is_remote() and not remote.is_open():
 			raise RuntimeError("Remote connector must be open")
 		self.__remote = remote
+
 
 	def __init__(self, remote:SSHConnector = None):
 		self.__remote:SSHConnector = None
@@ -128,12 +132,14 @@ class FileSystem(object):
 
 		self.set_remote(remote)
 
-		if remote is not None:
+		# OS deduction from platform.system() info
+		if self.is_remote():
 			system = self.__remote.platform()["system"]
 		else:
 			system = platform.system()
 		
 		# Load remote system informations 
+		# And should Pathlib path object accordingly 
 		if system == "Windows":
 			self.ostype = OSTYPE.WINDOWS
 		elif system == "Linux":
@@ -142,6 +148,9 @@ class FileSystem(object):
 			self.ostype = OSTYPE.MACOS
 		else:
 			self.ostype = OSTYPE.UNKNOW
+
+	def join(self, *other):
+		return str(self.__path.joinpath(*other))
 			
 
 

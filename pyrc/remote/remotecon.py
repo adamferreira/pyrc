@@ -6,7 +6,7 @@ import pyrc.event.progress as pyprogress
 import pyrc.event.event as pyevent
 import pyrc.local
 from pyrc.local.system import FileSystem, FileSystemTree
-import os, rich
+import os
 from pathlib import Path, PosixPath, PureWindowsPath, PurePosixPath, WindowsPath
 
 
