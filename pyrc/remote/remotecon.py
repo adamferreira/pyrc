@@ -197,10 +197,6 @@ class SSHConnector:
 			outlist.append(file.replace('\n', ''))
 		return outlist
 
-	def join(self, *args):
-		return '/'.join(args) if self.unix else '\\'.join(args)
-
-
 	def remote_file_exists_in_folder(self, folderpath, filename):
 		return filename in self.ls(folderpath)
 
@@ -244,7 +240,7 @@ class SSHConnector:
 
 	def __upload_tree(self, localtree:FileSystemTree, remote_path:str):
 		for n in localtree.nodes():
-			self.__upload_node(localnode = n, remote_path = self.join(remote_path, n.relpath()))
+			self.__upload_node(localnode = n, remote_path = self.path.join(remote_path, n.relpath()))
 			
 
 	def upload(self, local_realpath:str, remote_path:str):
@@ -256,7 +252,7 @@ class SSHConnector:
 		"""
 		local_realpath = os.path.realpath(local_realpath)
 		if os.path.isdir(local_realpath):
-			self.__upload_tree(get_tree(local_realpath), remote_path)
+			self.__upload_tree(FileSystemTree.get_tree(local_realpath), remote_path)
 
 		if os.path.isfile(local_realpath):
 			self.__upload_files([local_realpath], remote_path)

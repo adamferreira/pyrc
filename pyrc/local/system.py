@@ -152,6 +152,18 @@ class FileSystem(object):
 	def join(self, *other):
 		return str(self.__path.joinpath(*other))
 			
+	def mkdir(self, path:str, mode=0o777, parents=False, exist_ok=False):
+		newpath = type(self.__path)(path)
+		if self.is_remote():
+			if self.is_unix():
+				flag = " -p " if parents else ""
+				# TODO : creates an event that captures errors
+				self.__remote.exec_command(cmd = "mkdir " + flag + path)
+			else:
+				raise RuntimeError(f"mkdir no yet supported for os {self.ostype}")
+		else:
+			newpath.mkdir(mode=mode, parents=parents, exist_ok=exist_ok)
+		
 
 
 
@@ -235,9 +247,6 @@ def list_files(startpath):
         subindent = ' ' * 4 * (level + 1)
         for f in files:
             print('{}{}'.format(subindent, f))
-
-def get_tree(directory):
-	return FileSystemTree.get_tree(directory)
 
 def get_size(start_path = '.'):
 	total_size = 0
