@@ -34,12 +34,14 @@ class CommandStoreEvent(Event):
     def __init__(self, caller, *args, **kwargs):
         super().__init__(caller)
         self.__lines = [] 
+        self.__errors = []
         
     def begin(self, cmd, stdin, stdout, stderr):
         self.__lines = stdout.read().decode("utf-8").strip('\n').split('\n')
+        self.__errors = stderr.read().decode("utf-8").strip('\n').split('\n')
 
     def end(self):
-        return self.__lines
+        return self.__lines, self.__errors
 
 
 class FileTransferEvent(Event):

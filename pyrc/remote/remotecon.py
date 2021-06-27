@@ -4,8 +4,7 @@ import logging
 import getpass
 import pyrc.event.progress as pyprogress
 import pyrc.event.event as pyevent
-import pyrc.local
-from pyrc.local.system import FileSystem, FileSystemTree
+from pyrc.system.system import FileSystem, FileSystemTree
 import os
 from pathlib import Path, PosixPath, PureWindowsPath, PurePosixPath, WindowsPath
 
@@ -142,7 +141,7 @@ class SSHConnector:
 		return event.end()
 
 	def check_output(self, cmd:str):
-		return self.exec_command(cmd=cmd, event = pyevent.CommandStoreEvent(self))
+		return self.exec_command(cmd=cmd, event = pyevent.CommandStoreEvent(self))[0]
 
 	def open(self):
 		"""[summary]

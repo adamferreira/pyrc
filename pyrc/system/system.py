@@ -2,6 +2,7 @@ import os, platform
 import shutil
 from enum import Enum
 from pathlib import Path, PosixPath, WindowsPath
+import pyrc.event as pyevent
 
 class FileSystemTree(object):pass
 class FileSystem(object):pass
@@ -157,10 +158,11 @@ class FileSystem(object):
 		if self.is_remote():
 			if self.is_unix():
 				flag = " -p " if parents else ""
-				# TODO : creates an event that captures errors
-				self.__remote.exec_command(cmd = "mkdir " + flag + path)
+				out, err = self.__remote.exec_command(cmd = "mkdir " + flag + path, event = pyevent.CommandStoreEvent(self.__remote))
+				if len(err) > 0:
+					raise RuntimeError('\n'.join(err))
 			else:
-				raise RuntimeError(f"mkdir no yet supported for os {self.ostype}")
+				raise OSError(f"mkdir no yet supported for os {self.ostype}")
 		else:
 			newpath.mkdir(mode=mode, parents=parents, exist_ok=exist_ok)
 		

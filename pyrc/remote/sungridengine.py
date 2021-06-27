@@ -1,5 +1,4 @@
 import pyrc.remote as pyrm
-import pyrc.local as pylc
 
 class SunGridEngineLauncher(pyrm.CommandExecutor):
     def __init__(self):
