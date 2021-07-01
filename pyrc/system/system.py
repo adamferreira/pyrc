@@ -154,15 +154,35 @@ class FileSystem(object):
 		return str(self.__path.joinpath(*other))
 			
 	def mkdir(self, path:str, mode=0o777, parents=False, exist_ok=False):
+		"""[summary]
+		Create a new directory at this given path. If mode is given, it is combined with the process’ umask value to determine the file mode and access flags. 
+		If the path already exists, FileExistsError is raised.
+		If parents is true, any missing parents of this path are created as needed; 
+		they are created with the default permissions without taking mode into account (mimicking the POSIX mkdir -p command).
+		If parents is false (the default), a missing parent raises FileNotFoundError.
+		If exist_ok is false (the default), FileExistsError is raised if the target directory already exists.
+		If exist_ok is true, FileExistsError exceptions will be ignored (same behavior as the POSIX mkdir -p command), 
+		but only if the last path component is not an existing non-directory file.
+		Args:
+			path (str): [description]
+			mode ([type], optional): [description]. Defaults to 0o777.
+			parents (bool, optional): [description]. Defaults to False.
+			exist_ok (bool, optional): [description]. Defaults to False.
+
+		Raises:
+			RuntimeError: [description]
+			OSError: [description]
+		"""
 		newpath = type(self.__path)(path)
 		if self.is_remote():
+			event = pyevent.CommandStoreEvent(self.__remote)
 			if self.is_unix():
 				flag = " -p " if parents else ""
-				out, err = self.__remote.exec_command(cmd = "mkdir " + flag + path, event = pyevent.CommandStoreEvent(self.__remote))
+				out, err = self.__remote.exec_command(cmd = "mkdir " + flag + path, event = event)
 				if len(err) > 0:
 					raise RuntimeError('\n'.join(err))
-			else:
-				raise OSError(f"mkdir no yet supported for os {self.ostype}")
+			else: # No need for -p flag in DOS
+				out, err = self.__remote.exec_command(cmd = "mkdir " + path, event = event)
 		else:
 			newpath.mkdir(mode=mode, parents=parents, exist_ok=exist_ok)
 		

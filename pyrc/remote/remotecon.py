@@ -274,9 +274,6 @@ class SSHConnector:
 	def rm(self, remote_path, flag = ""):
 		stdin, stdout, stderr = self.__exec_command("rm " + flag + " " + remote_path)
 
-	def mkdir(self, remote_path):
-		stdin, stdout, stderr = self.__exec_command("mkdir " + remote_path)
-
 	def zip(self, remote_path, remote_archive, flag = ""):
 		stdin, stdout, stderr = self.__exec_command("zip " + flag + " \"" + remote_archive + "\" \"" + remote_path + "\"", print_output = True)
 
