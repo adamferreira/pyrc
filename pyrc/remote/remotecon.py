@@ -231,7 +231,7 @@ class SSHConnector:
 
 		if self.remote_file_exists(remote_path):
 			self.rm(remote_path)
-		self.mkdir(remote_path)
+		self.path.mkdir(remote_path, exist_ok=True)
 
 		self.dirupload_event.begin(localnode.realpath(), remote_path)
 		self.__upload_files(local_paths=localnode.realfiles(), remote_path=remote_path)

@@ -173,17 +173,19 @@ class FileSystem(object):
 			RuntimeError: [description]
 			OSError: [description]
 		"""
-		newpath = type(self.__path)(path)
 		if self.is_remote():
 			event = pyevent.CommandStoreEvent(self.__remote)
+			out, err = [], []
 			if self.is_unix():
-				flag = " -p " if parents else ""
+				flag = " -p " if parents or exist_ok else ""
+				#flag = " ".join([flag, "-m " + str(mode)])
 				out, err = self.__remote.exec_command(cmd = "mkdir " + flag + path, event = event)
-				if len(err) > 0:
-					raise RuntimeError('\n'.join(err))
-			else: # No need for -p flag in DOS
+			else: # No need for -p flag in Windows
 				out, err = self.__remote.exec_command(cmd = "mkdir " + path, event = event)
+			if len(err) > 1:
+				raise RuntimeError('\n'.join(err))
 		else:
+			newpath = type(self.__path)(path)
 			newpath.mkdir(mode=mode, parents=parents, exist_ok=exist_ok)
 		
 
