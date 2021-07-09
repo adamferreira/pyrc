@@ -101,6 +101,17 @@ class FileSystemTree(object):
 			
 			return tree_root
 
+	@staticmethod
+	def get_root(directory:str):
+		tree_root = FileSystemTree(root = os.path.realpath(directory), parent=None, files=[], dirs={})
+		for root, dirs, files in os.walk(tree_root.realpath()):
+			tree_root.files = files.copy()
+			for dir in dirs :
+				tree_root.dirs[dir] = dir
+
+			return tree_root
+
+
 class FileSystem(object):
 	@property
 	def ostype(self) -> OSTYPE:
@@ -178,15 +189,25 @@ class FileSystem(object):
 			out, err = [], []
 			if self.is_unix():
 				flag = " -p " if parents or exist_ok else ""
+				"""TODO make mode work on remote machine"""
 				#flag = " ".join([flag, "-m " + str(mode)])
-				out, err = self.__remote.exec_command(cmd = "mkdir " + flag + path, event = event)
+				out, err = self.__remote.exec_command(cmd = f"mkdir {flag} {path}", event = event)
 			else: # No need for -p flag in Windows
-				out, err = self.__remote.exec_command(cmd = "mkdir " + path, event = event)
+				out, err = self.__remote.exec_command(cmd = f"mkdir {path}", event = event)
 			if len(err) > 1:
 				raise RuntimeError('\n'.join(err))
 		else:
 			newpath = type(self.__path)(path)
 			newpath.mkdir(mode=mode, parents=parents, exist_ok=exist_ok)
+
+	def ls(self, path):
+		if self.is_remote():
+			if self.is_unix():
+				return self.__remote.check_output(f"ls {path}")
+			else:
+				return self.__remote.check_output(f"dir {path}")
+		else:
+			return FileSystemTree.get_root(path)
 		
 
 
