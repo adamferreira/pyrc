@@ -200,7 +200,12 @@ class FileSystem(object):
 			newpath = type(self.__path)(path)
 			newpath.mkdir(mode=mode, parents=parents, exist_ok=exist_ok)
 
-	def ls(self, path):
+	def ls(self, path:str)-> 'List[str]':
+		"""[summary]
+		Return files and directories in path (no recursion) as a string list
+		Returns:
+			[type]: [description]
+		"""
 		if self.is_remote():
 			if self.is_unix():
 				return self.__remote.check_output(f"ls {path}")
