@@ -213,6 +213,17 @@ class FileSystem(object):
 				return self.__remote.check_output(f"dir {path}")
 		else:
 			return FileSystemTree.get_root(path)
+
+	def lsdir(slef, path:str)-> 'FileSystemTree':
+		"""[summary]
+			Return files and directories in path (recursilvy) as a FileSystemTree
+		Returns:
+			[type]: [description]
+		"""
+		if self.is_remote():
+			raise RuntimeError("lsdir not yet supported for remote paths.")
+		else:
+			return FileSystemTree.get_tree(path)
 		
 
 
