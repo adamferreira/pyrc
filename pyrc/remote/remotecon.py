@@ -102,11 +102,12 @@ class SSHConnector:
 		return self.__cmd_event
 
 
-	def __init__(self, user:str, hostname:str, sshkey:str, proxycommand:str = None, askpwd:bool = False):
+	def __init__(self, user:str, hostname:str, sshkey:str, port:int = None, proxycommand:str = None, askpwd:bool = False):
 		self._user:str = user
 		self._hostname:str = hostname
 		self._proxycommand:str = proxycommand
 		self._sshkey:str = sshkey
+		self._port:int = port
 		self._askpwd:bool = askpwd
 		self._environ:SSHConnector.SSHEnvironDict = None
 		self._cwd:str = "" # Currend directory
