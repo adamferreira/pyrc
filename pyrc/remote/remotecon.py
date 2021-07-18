@@ -61,6 +61,10 @@ class SSHConnector:
 		return str(self._sshkey)
 
 	@property
+	def port(self) -> int:
+		return str(self._port)
+
+	@property
 	def pwd(self):
 		return self._cwd
 	def cd(self, directory:str):
@@ -150,16 +154,17 @@ class SSHConnector:
 		"""
 		if self.use_proxy:
 			proxy = paramiko.ProxyCommand(self.proxycommand)
-			self._sshcon.connect(self.hostname, username=self.user, key_filename=self.sshkey, sock=proxy)
+			self._sshcon.connect(self.hostname, username=self.user, port=self.port, key_filename=self.sshkey, sock=proxy)
 		else:
 			if self.askpwd:
 				self._sshcon.connect(
 					self.hostname, 
 					username=self.user, 
+					port=self.port,
 					key_filename=self.sshkey, 
 					password=getpass.getpass(prompt=f"Password for {self.user}@{self.hostname}:"))
 			else:
-				self._sshcon.connect(self.hostname, username=self.user, key_filename=self.sshkey)
+				self._sshcon.connect(self.hostname, username=self.user, port=self.port, key_filename=self.sshkey)
 
 		# SCP connection
 		self._scp = SCPClient(self._sshcon.get_transport())
