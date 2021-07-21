@@ -225,6 +225,9 @@ class FileSystem(object):
 		else:
 			return FileSystemTree.get_tree(path)
 		
+	def file_exists_in_folder(self, folderpath:str, filename:str)->bool:
+		files = self.ls(folderpath)
+		return filename in files
 
 
 
