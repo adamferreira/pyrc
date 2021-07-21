@@ -229,6 +229,31 @@ class FileSystem(object):
 		files = self.ls(folderpath)
 		return filename in files
 
+	def dirname(self, path:str)->str:
+		return str(type(self.__path)(path).parent)
+
+	def basename(self, path:str)->str:
+		return str(type(self.__path)(path).name)
+
+	def isfile(self, path:str)->bool:
+		"""[summary]
+
+		Args:
+			path (str): [description]
+
+		Raises:
+			RuntimeError: [description]
+
+		Returns:
+			Return True if the path points to a regular file (or a symbolic link pointing to a regular file), False if it points to another kind of file.
+			False is also returned if the path doesn’t exist or is a broken symlink; other errors (such as permission errors) are propagated.
+		"""
+		if self.is_remote():
+			return "ok" in self.__remote.check_output(f"[[ -f {path} ]] && echo \"ok\"")
+			#return self.file_exists_in_folder(self.dirname(path), self.basename(path))
+		else:
+			return type(self.__path)(path).is_file()
+
 
 
 def _create_directory(dir_path):
