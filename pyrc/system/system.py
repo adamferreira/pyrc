@@ -254,6 +254,12 @@ class FileSystem(object):
 		else:
 			return type(self.__path)(path).is_file()
 
+	def isdir(self, path:str)->bool:
+		if self.is_remote():
+			return "ok" in self.__remote.check_output(f"[[ -d {path} ]] && echo \"ok\"")
+		else:
+			return type(self.__path)(path).is_dir()
+
 
 
 def _create_directory(dir_path):
