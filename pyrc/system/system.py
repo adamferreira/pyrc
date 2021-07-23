@@ -249,14 +249,31 @@ class FileSystem(object):
 			False is also returned if the path doesn’t exist or is a broken symlink; other errors (such as permission errors) are propagated.
 		"""
 		if self.is_remote():
-			return "ok" in self.__remote.check_output(f"[[ -f {path} ]] && echo \"ok\"")
+			if self.is_unix():
+				return "ok" in self.__remote.check_output(f"[[ -f {path} ]] && echo \"ok\"")
+			else:
+				raise RuntimeError("isfile not supported for Windows remote systems")
 			#return self.file_exists_in_folder(self.dirname(path), self.basename(path))
 		else:
 			return type(self.__path)(path).is_file()
 
 	def isdir(self, path:str)->bool:
+		"""[summary]
+
+		Args:
+			path (str): [description]
+
+		Raises:
+			RuntimeError: [description]
+
+		Returns:
+			bool: [description]
+		"""
 		if self.is_remote():
-			return "ok" in self.__remote.check_output(f"[[ -d {path} ]] && echo \"ok\"")
+			if self.is_unix():
+				return "ok" in self.__remote.check_output(f"[[ -s {path} ]] && echo \"ok\"")
+			else:
+				raise RuntimeError("isdir not supported for Windows remote systems")
 		else:
 			return type(self.__path)(path).is_dir()
 
