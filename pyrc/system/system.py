@@ -221,6 +221,7 @@ class FileSystem(object):
 			[type]: [description]
 		"""
 		if self.is_remote():
+			# TODO
 			raise RuntimeError("lsdir not yet supported for remote paths.")
 		else:
 			return FileSystemTree.get_tree(path)
@@ -252,6 +253,7 @@ class FileSystem(object):
 			if self.is_unix():
 				return "ok" in self.__remote.check_output(f"[[ -f {path} ]] && echo \"ok\"")
 			else:
+				# TODO
 				raise RuntimeError("isfile not supported for Windows remote systems")
 			#return self.file_exists_in_folder(self.dirname(path), self.basename(path))
 		else:
@@ -273,9 +275,21 @@ class FileSystem(object):
 			if self.is_unix():
 				return "ok" in self.__remote.check_output(f"[[ -s {path} ]] && echo \"ok\"")
 			else:
+				# TODO
 				raise RuntimeError("isdir not supported for Windows remote systems")
 		else:
 			return type(self.__path)(path).is_dir()
+
+	def islink(self, path:str)->bool:
+		if self.is_remote():
+			if self.is_unix():
+				# TODO
+				raise RuntimeError("isdir not supported for Unix remote systems")
+			else:
+				# TODO
+				raise RuntimeError("isdir not supported for Windows remote systems")
+		else:
+			return type(self.__path)(path).is_symlink()
 
 
 
