@@ -200,6 +200,24 @@ class FileSystem(object):
 			newpath = type(self.__path)(path)
 			newpath.mkdir(mode=mode, parents=parents, exist_ok=exist_ok)
 
+	def rmdir(path:str, recur:bool = False):
+		# TODO
+		return None
+		if self.remote():
+			return None
+		else:
+			def rm_tree(pth):
+				pth = Path(pth)
+				for child in pth.glob('*'):
+					if child.is_file():
+						child.unlink()
+					else:
+						rm_tree(child)
+				pth.rmdir()
+				
+			rm_tree(type(self.__path)(path))
+			
+
 	def ls(self, path:str)-> 'List[str]':
 		"""[summary]
 		Return files and directories in path (no recursion) as a string list
