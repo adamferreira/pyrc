@@ -134,19 +134,19 @@ class SSHConnector:
 		self.__dirdownload_event = pyevent.RichRemoteDirDownloadEvent(self)
 		self.__cmd_event = pyevent.CommandPrintEvent(self)
 
-	def __exec_command(self, cmd:str):
-		stdin, stdout, stderr = self._sshcon.exec_command("cd " + self._cwd + ";" + cmd)
+	def __exec_command(self, cmd:str, environment:dict = None):
+		stdin, stdout, stderr = self._sshcon.exec_command("cd " + self._cwd + ";" + cmd, environment = environment)
 		return stdin, stdout, stderr
 
-	def exec_command(self, cmd:str, event:pyevent.Event = None):
+	def exec_command(self, cmd:str, environment:dict = None, event:pyevent.Event = None):
 		stdin, stdout, stderr = self.__exec_command("cd " + self._cwd + ";" + cmd)
 		# Blocking event
 		event = self.__cmd_event if event is None else event
 		event.begin(cmd, stdin, stdout, stderr)
 		return event.end()
 
-	def check_output(self, cmd:str):
-		return self.exec_command(cmd=cmd, event = pyevent.CommandStoreEvent(self))[0]
+	def check_output(self, cmd:str,  environment:dict = None):
+		return self.exec_command(cmd=cmd, environment = environment, event = pyevent.CommandStoreEvent(self))[0]
 
 	def open(self):
 		"""[summary]
