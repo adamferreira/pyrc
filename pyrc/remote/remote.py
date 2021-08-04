@@ -25,7 +25,7 @@ def create_connectors(user_config_file:str, sshkey:str=None) -> 'dict[str:SSHCon
             user=user_config["user"],
             hostname=user_config["hostname"],
             sshkey=sshkey,
-            port = user_config["port"] if "port" in user_config else None,
+            port = user_config["port"] if "port" in user_config else 22,
             proxycommand=user_config["proxycommand"] if "proxycommand" in user_config else None,
             askpwd = False
         )
