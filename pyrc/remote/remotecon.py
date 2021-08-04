@@ -139,7 +139,7 @@ class SSHConnector:
 		return stdin, stdout, stderr
 
 	def exec_command(self, cmd:str, environment:dict = None, event:pyevent.Event = None):
-		stdin, stdout, stderr = self.__exec_command("cd " + self._cwd + ";" + cmd)
+		stdin, stdout, stderr = self.__exec_command("cd " + self._cwd + ";" + cmd, environment)
 		# Blocking event
 		event = self.__cmd_event if event is None else event
 		event.begin(cmd, stdin, stdout, stderr)
