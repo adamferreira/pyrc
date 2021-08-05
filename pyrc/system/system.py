@@ -149,12 +149,13 @@ class FileSystem(object):
 			system = self.__remote.platform()["system"]
 		else:
 			system = platform.system()
+			
 		
 		# Load remote system informations 
 		# And should Pathlib path object accordingly 
 		if system == "Windows":
 			self.ostype = OSTYPE.WINDOWS
-		elif system == "Linux":
+		elif "Linux" in system:
 			self.ostype = OSTYPE.LINUX
 		elif system == "Darwin":
 			self.ostype = OSTYPE.MACOS

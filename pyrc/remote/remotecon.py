@@ -135,7 +135,14 @@ class SSHConnector:
 		self.__cmd_event = pyevent.CommandPrintEvent(self)
 
 	def __exec_command(self, cmd:str, environment:dict = None):
-		stdin, stdout, stderr = self._sshcon.exec_command("cd " + self._cwd + ";" + cmd, environment = environment)
+		env_vars=""
+		if environment is not None:
+			if self.path.is_unix():
+				env_vars = ';'.join([f"export {var}={environment[var]}" for var in environment.keys()]) + ";"
+			else:
+				raise NotImplemented("Cannot set environment variables for Windows remote systems")
+
+		stdin, stdout, stderr = self._sshcon.exec_command(env_vars + "cd " + self._cwd + ";" + cmd, environment = environment, get_pty=False)
 		return stdin, stdout, stderr
 
 	def exec_command(self, cmd:str, environment:dict = None, event:pyevent.Event = None):
