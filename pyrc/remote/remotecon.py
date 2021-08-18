@@ -230,7 +230,7 @@ class SSHConnector:
 		"""
 		self.filesupload_event.begin(local_paths)
 		scp = SCPClient(self._sshcon.get_transport(), progress = self.filesupload_event.progress)
-		scp.put(local_paths, recursive=False, remote_path = remote_path)
+		scp.put(local_path = local_paths, recursive=False, remote_path = remote_path)
 		self.filesupload_event.end()
 		scp.close()
 	
@@ -268,6 +268,19 @@ class SSHConnector:
 
 		if os.path.isfile(local_realpath):
 			self.__upload_files([local_realpath], remote_path)
+
+	def __download_files(self, remote_paths:'List[str]', local_path:str):
+		"""[summary]
+
+		Args:
+			local_paths (List[str]): Absolute file paths
+			remote_path (str): Absolute remote path
+		"""
+		self.__filesdownload_event.begin(local_path)
+		scp = SCPClient(self._sshcon.get_transport(), progress = self.__filesdownload_event.progress)
+		scp.get(local_path = local_path, recursive=False, remote_path = remote_paths)
+		self.__filesdownload_event.end()
+		scp.close()
 
 	def download(self, remote_file_path, local_file_path = "."):
 		"""Recursivly download files/folder from remote host.
