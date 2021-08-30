@@ -273,10 +273,10 @@ class SSHConnector:
 		"""[summary]
 
 		Args:
-			local_paths (List[str]): Absolute file paths
-			remote_path (str): Absolute remote path
+			remote_paths (List[str]): Absolute remote paths
+			local_path (str): Absolute local path
 		"""
-		self.__filesdownload_event.begin(local_path)
+		self.__filesdownload_event.begin(remote_paths)
 		scp = SCPClient(self._sshcon.get_transport(), progress = self.__filesdownload_event.progress)
 		scp.get(local_path = local_path, recursive=False, remote_path = remote_paths)
 		self.__filesdownload_event.end()
