@@ -113,6 +113,7 @@ class FileSystemTree(object):
 
 
 class FileSystem(object):
+
 	@property
 	def ostype(self) -> OSTYPE:
 		return self.__ostype
@@ -309,6 +310,44 @@ class FileSystem(object):
 				raise RuntimeError("isdir not supported for Windows remote systems")
 		else:
 			return type(self.__path)(path).is_symlink()
+
+
+class RemotePython(object):
+	def __init__(self, remote:SSHConnector, python_remote_install:str=None, python_virtual_env_path:str=None):
+		assert remote is not None
+		assert remote.is_open()
+		if python_remote_install is not None:
+			assert remote.path.isfile(python_remote_install)
+			self.python = python_remote_install
+		else:
+			self.python = "python3"
+
+		self.__remote = remote
+		self.venv = python_virtual_env_path
+
+	def __load_venv_cmd(self):
+		if self.remotefs.is_unix():
+			return f"source {self.python_virtual_env_path}/bin/activate"
+		else:
+			raise RuntimeError("Cannot load virtual python envs on Windows yet.")
+
+	def create_new_virtual_env(self, python_virtual_env_path:str):
+		self.venv = python_virtual_env_path
+		out, err = self.__remote.exec_command(
+			cmd = f"{self.python} -m venv {self.venv}" , 
+			event = pyevent.CommandStoreEvent(self.__remote)
+		)
+		self.python = self.__remote.path.join(python_virtual_env_path, "python")
+
+	def create_virtual_env(self, python_virtual_env_path:str):
+		if self.__remote.path.isdir(python_virtual_env_path):
+			raise RuntimeError("Python virtual env {python_virtual_env_path} already exists on remote system.")
+		else:
+			self.create_new_virtual_env(python_virtual_env_path)
+
+
+	def get_python_version(self):
+		return None
 
 
 
