@@ -347,7 +347,7 @@ class RemotePython(object):
 		assert remote is not None
 		assert remote.is_open()
 		if python_remote_install is not None:
-			assert remote.path.isfile(python_remote_install)
+			#assert remote.path.isfile(python_remote_install)
 			self.python = python_remote_install
 		else:
 			self.python = "python3"
@@ -356,8 +356,11 @@ class RemotePython(object):
 		self.venv = python_virtual_env_path
 
 	def __load_venv_cmd(self):
-		if self.remote.path.is_unix():
-			return f"source {self.python_virtual_env_path}/bin/activate"
+		if self.__remotefs.is_unix():
+			if self.venv is None:
+				return ""
+			else:
+				return f"source {self.python_virtual_env_path}/bin/activate" + " ; "
 		else:
 			raise RuntimeError("Cannot load virtual python envs on Windows yet.")
 
@@ -370,7 +373,7 @@ class RemotePython(object):
 		self.python = self.__remotefs.join(python_virtual_env_path, "python")
 
 	def create_virtual_env(self, python_virtual_env_path:str, error_if_exists=True):
-		if self.__remote.path.isdir(python_virtual_env_path):
+		if self.__remotefs.isdir(python_virtual_env_path):
 			if error_if_exists:
 				raise RuntimeError(f"Python virtual env {python_virtual_env_path} already exists on remote system.")
 			else:
@@ -378,7 +381,7 @@ class RemotePython(object):
 		else:
 			self.create_new_virtual_env(python_virtual_env_path)
 
-	def execute(self, cmd:str, environment:dict = None, event:pyevent.Event = None):
+	def execute(self, pycmd:str, environment:dict = None, event:pyevent.Event = None):
 		"""[summary]
 		Execute the given command.
 		Use the cached virtual env is it exists.
@@ -387,23 +390,22 @@ class RemotePython(object):
 		"""
 		event = pyevent.CommandPrintEvent(self) if event is None else event
 		venv = self.__load_venv_cmd()
-		self.__remotefs.exec_command(
-			cmd = f"{venv} && {self.python} -c \'{cmd}\'",
+		return self.__remotefs.exec_command(
+			cmd = f"{venv} {self.python} -c \'{pycmd}\'",
 			environment = environment,
 			event = event
 		)
 
-	def get_python_version(self)->str:
+	def version(self)->str:
 		"""[summary]
 		Get the remote python installation version
 		Returns:
 			str: [Python string version]
 		"""
-		out, err = self.__remotefs.exec_command(
-			cmd = self.__load_venv_cmd() + " && " + self.python + " -V",
-			event = pyevent.CommandStoreEvent(self.__remotefs)
-		)
-		return out[0]
+		out, err = self.execute(
+			pycmd = "import sys; print(sys.version_info[0]); print(sys.version_info[1]); print(sys.version_info[2])", 
+			event = pyevent.CommandStoreEvent(self.__remotefs))
+		return int(out[0]), int(out[1]), int(out[2])
 
 
 def _create_directory(dir_path):
