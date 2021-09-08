@@ -335,7 +335,7 @@ class FileSystem(object):
 		else:
 			if _CMDEXEC_SUBPROCESS_ENABLED_:
 				event = pyevent.CommandPrintEvent(self) if event is None else event
-				p = Popen([full_cmd], stdin = PIPE, stdout = PIPE, stderr = PIPE, shell = True)
+				p = Popen([full_cmd], stdin = PIPE, stdout = PIPE, stderr = PIPE, env = environment, shell = True)
 				event.begin(cmd, p.stdin, p.stdout, p.stderr)
 				return event.end()
 			else:
