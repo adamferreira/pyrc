@@ -2,7 +2,7 @@ import os, platform
 import shutil
 from enum import Enum
 from pathlib import Path, PosixPath, WindowsPath
-import pyrc.event as pyevent
+import pyrc.event.event as pyevent
 
 try:
     from pyrc.remote import SSHConnector
@@ -324,14 +324,20 @@ class FileSystem(object):
 			return type(self.__path)(path).is_symlink()
 
 	def exec_command(self, cmd:str, flags:'list[str]' = [], environment:dict = None, event:pyevent.Event = None):
-		full_cmd = flags.copy()
+		full_cmd = flags.copy() if flags is not [] else []
 		full_cmd.insert(0, cmd)
 		full_cmd = " ".join(full_cmd)
-		if self.remote() and _CMDEXEC_REMOTE_ENABLED_:
-			return self.exec_command(full_cmd, environment, event)
+		if self.is_remote():
+			if _CMDEXEC_REMOTE_ENABLED_ or True:
+				return self.__remote.exec_command(full_cmd, environment, event)
+			else:
+				raise RuntimeError("Could not load remote connection.")
 		else:
 			if _CMDEXEC_SUBPROCESS_ENABLED_:
-				return None
+				event = pyevent.CommandPrintEvent(self) if event is None else event
+				p = Popen([full_cmd], stdin = PIPE, stdout = PIPE, stderr = PIPE, shell = True)
+				event.begin(cmd, p.stdin, p.stdout, p.stderr)
+				return event.end()
 			else:
 				raise RuntimeError("Could not load subprocess module.")
 

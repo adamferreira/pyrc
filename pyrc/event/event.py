@@ -26,6 +26,30 @@ class CommandPrintEvent(Event):
         print(line)
 
     def begin(self, cmd, stdin, stdout, stderr):
+        while True:
+            line = stdout.readline()
+            if not line: break
+            self.progress(line.decode("utf-8").strip('\n'))
+        #for line in stdout:
+        #    self.progress(line.decode("utf-8").rstrip())
+        #    stdout.flush()
+        # Poll process.stdout to show stdout live
+        #while True:
+        #    output = process.stdout.readline()
+        #    if process.poll() is not None:
+        #        break
+        #    if output:
+        #        self.progress(output.strip())
+        #rc = process.poll()
+
+class RemoteCommandPrintEvent(Event):
+    def __init__(self, caller, *args, **kwargs):
+        super().__init__(caller) 
+
+    def progress(self, line):
+        print(line)
+
+    def begin(self, cmd, stdin, stdout, stderr):
         print(f"{self.caller.user}@{self.caller.hostname} -> {cmd}")
         while not stdout.channel.exit_status_ready():
             self.progress(stdout.readline().strip('\n'))
