@@ -4,6 +4,18 @@ from enum import Enum
 from pathlib import Path, PosixPath, WindowsPath
 import pyrc.event as pyevent
 
+try:
+    from pyrc.remote import SSHConnector
+    _CMDEXEC_REMOTE_ENABLED_ = True
+except:
+    _CMDEXEC_REMOTE_ENABLED_ = False
+try:
+    from subprocess import *
+    from subprocess import check_output
+    _CMDEXEC_SUBPROCESS_ENABLED_ = True
+except:
+    _CMDEXEC_SUBPROCESS_ENABLED_ = False
+
 class FileSystemTree(object):pass
 class FileSystem(object):pass
 class SSHConnector(object):pass 
@@ -310,6 +322,18 @@ class FileSystem(object):
 				raise RuntimeError("isdir not supported for Windows remote systems")
 		else:
 			return type(self.__path)(path).is_symlink()
+
+	def exec_command(self, cmd:str, flags:'list[str]' = [], environment:dict = None, event:pyevent.Event = None):
+		full_cmd = flags.copy()
+		full_cmd.insert(0, cmd)
+		full_cmd = " ".join(full_cmd)
+		if self.remote() and _CMDEXEC_REMOTE_ENABLED_:
+			return self.exec_command(full_cmd, environment, event)
+		else:
+			if _CMDEXEC_SUBPROCESS_ENABLED_:
+				return None
+			else:
+				raise RuntimeError("Could not load subprocess module.")
 
 
 class RemotePython(object):
