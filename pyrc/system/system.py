@@ -381,7 +381,7 @@ class RemotePython(object):
 		else:
 			self.create_new_virtual_env(python_virtual_env_path)
 
-	def execute(self, pycmd:str, environment:dict = None, event:pyevent.Event = None):
+	def exec_command(self, pycmd:str, environment:dict = None, event:pyevent.Event = None):
 		"""[summary]
 		Execute the given command.
 		Use the cached virtual env is it exists.
@@ -402,9 +402,13 @@ class RemotePython(object):
 		Returns:
 			str: [Python string version]
 		"""
-		out, err = self.execute(
+		out, err = self.exec_command(
 			pycmd = "import sys; print(sys.version_info[0]); print(sys.version_info[1]); print(sys.version_info[2])", 
 			event = pyevent.CommandStoreEvent(self.__remotefs))
+
+		if len(err) > 0:
+			raise RuntimeError("\n".join(err))
+
 		return int(out[0]), int(out[1]), int(out[2])
 
 
