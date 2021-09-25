@@ -130,6 +130,10 @@ class FileSystem(object):
 	def ostype(self) -> OSTYPE:
 		return self.__ostype
 
+	@property 
+	def connector(self) -> SSHConnector:
+		return self.__remote
+
 	def is_unix(self) -> bool:
 		return self.ostype == OSTYPE.LINUX or self.ostype == OSTYPE.MACOS
 
@@ -144,7 +148,7 @@ class FileSystem(object):
 		else:
 			self.__path = PosixPath()
 
-	def set_remote(self, remote:SSHConnector):
+	def set_connector(self, remote:SSHConnector):
 		if self.is_remote() and not remote.is_open():
 			raise RuntimeError("Remote connector must be open")
 		self.__remote = remote
@@ -155,7 +159,7 @@ class FileSystem(object):
 		self.__path:Path = None
 		self.__ostype:OSTYPE = None
 
-		self.set_remote(remote)
+		self.set_connector(remote)
 
 		# OS deduction from platform.system() info
 		if self.is_remote():
