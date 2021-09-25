@@ -4,6 +4,7 @@ requires = [
     "setuptools",
     "wheel",
     "build",
-    "pytest"
+    "pytest",
+    "pytest-depends"
 ]
 build-backend = "setuptools.build_meta"
