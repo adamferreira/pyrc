@@ -214,11 +214,18 @@ class FileSystem(object):
 			newpath = type(self.__path)(path)
 			newpath.mkdir(mode=mode, parents=parents, exist_ok=exist_ok)
 
-	def rmdir(path:str, recur:bool = False):
-		# TODO
-		return None
+	def rmdir(self, path:str, recur:bool = False):
+		# TODO doc
+		# Keep rmdir and rm_tree in a single method ?
 		if self.remote():
-			return None
+			if self.is_unix():
+				cmd_ = "rm -rf" if recur else "rmdir"
+				out, err = self.exec_command(
+					cmd = f"{cmd_} {path}",
+					event = pyevent.CommandStoreEvent(self.__remote)
+				)
+			else:
+				raise RuntimeError("rmdir is only available on unix remote systems.")
 		else:
 			def rm_tree(pth):
 				pth = Path(pth)
@@ -229,7 +236,11 @@ class FileSystem(object):
 						rm_tree(child)
 				pth.rmdir()
 				
-			rm_tree(type(self.__path)(path))
+			newpath = type(self.__path)(path)
+			if recur:
+				rm_treen(newpath)
+			else:
+				newpath.rmdir()
 			
 
 	def ls(self, path:str)-> 'List[str]':
@@ -337,6 +348,7 @@ class FileSystem(object):
 				event = pyevent.CommandPrintEvent(self) if event is None else event
 				p = Popen([full_cmd], stdin = PIPE, stdout = PIPE, stderr = PIPE, env = environment, shell = True)
 				event.begin(cmd, p.stdin, p.stdout, p.stderr)
+				#os.system(full_cmd) #TODO use os.system for realtime python stdout feed ?
 				return event.end()
 			else:
 				raise RuntimeError("Could not load subprocess module.")
@@ -392,6 +404,19 @@ class RemotePython(object):
 		venv = self.__load_venv_cmd()
 		return self.__remotefs.exec_command(
 			cmd = f"{venv} {self.python} -c \'{pycmd}\'",
+			environment = environment,
+			event = event
+		)
+
+	def exec_script(self, pyscript:str, environment:dict = None, event:pyevent.Event = None):
+		event = pyevent.CommandPrintEvent(self) if event is None else event
+		venv = self.__load_venv_cmd()
+
+		if not self.__remotefs.isfile(pyscript):
+			raise FileNotFoundError(f"{pyscript} cannot be found on remote system.")
+
+		return self.__remotefs.exec_command(
+			cmd = f"{venv} {self.python} {pyscript}",
 			environment = environment,
 			event = event
 		)
