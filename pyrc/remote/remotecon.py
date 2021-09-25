@@ -132,7 +132,7 @@ class SSHConnector:
 		self.__dirupload_event = pyevent.RichRemoteDirUploadEvent(self)
 		self.__filesdownload_event = pyevent.FileTransferEvent(self)
 		self.__dirdownload_event = pyevent.RichRemoteDirDownloadEvent(self)
-		self.__cmd_event = pyevent.CommandPrintEvent(self)
+		self.__cmd_event = pyevent.RemoteCommandPrintEvent(self)
 
 	def __exec_command(self, cmd:str, environment:dict = None):
 		env_vars=""
@@ -319,7 +319,6 @@ class SSHConnector:
 			raise RuntimeError("Remote folder " + remote_folder_path + " not found.")
 
 	def download_folder(self, remote_folder_path, local_path, compress = False, clean_remote = False):
-
 		if os.path.isdir(local_path):
 			raise RuntimeError("Local path already exists !")
 
