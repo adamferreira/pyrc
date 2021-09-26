@@ -47,7 +47,7 @@ def test_file_creation(filesystem):
         assert path.isfile(newfile)
         assert os.stat(newfile).st_size == newfile_size
         # Detroy local file
-        os.unlink(newfile)
+        path.unlink(newfile, missing_ok=False)
         assert not path.isfile(newfile)
 
 

@@ -245,6 +245,30 @@ class FileSystem(object):
 				rm_treen(newpath)
 			else:
 				newpath.rmdir()
+
+	def unlink(self, path:str, missing_ok:bool=False):
+		"""[summary]
+		Similar to os.unlink().
+		Remove this file or symbolic link. If the path points to a directory, use rmdir() instead.
+		If missing_ok is false (the default), FileNotFoundError is raised if the path does not exist.
+		If missing_ok is true, FileNotFoundError exceptions will be ignored (same behavior as the POSIX rm -f command).
+		Args:
+			path (str): [description]
+			missing_ok (bool, optional): [description]. Defaults to False.
+		"""
+		if self.is_remote():
+			if not missing_ok and (not self.isfile(path) or not self.islink(path)):
+				raise FileNotFoundError(f"Remote file {path} does not exist.")
+
+			if self.is_unix():
+				out, err = self.exec_command(
+					cmd = f"rm -f {path}",
+					event = pyevent.CommandStoreEvent(self.__remote)
+				)
+			else:
+				raise RuntimeError("unlink is only available on unix remote systems.")
+		else:
+			type(self.__path)(path).unlink(missing_ok)
 			
 
 	def ls(self, path:str)-> 'List[str]':
