@@ -7,6 +7,14 @@ import pyrc.event.event as pyevent
 THIS_FILE = os.path.realpath(__file__)
 THIS_DIR = os.path.dirname(THIS_FILE)
 
+
+def create_sparse_file(path:str, bytes:int) -> None:
+    f = open(path,"wb")
+    f.seek(bytes-1)
+    f.write(b"\0")
+    f.close()
+
+
 class FileSystemTest(object):
     def __init__(self, path:pysys.FileSystem, workspace:str, is_local:bool):
         self.path = path
