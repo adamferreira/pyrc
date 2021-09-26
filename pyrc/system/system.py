@@ -355,10 +355,10 @@ class FileSystem(object):
 		if self.is_remote():
 			if self.is_unix():
 				# TODO
-				raise RuntimeError("isdir not supported for Unix remote systems")
+				raise RuntimeError("islink not supported for Unix remote systems")
 			else:
 				# TODO
-				raise RuntimeError("isdir not supported for Windows remote systems")
+				raise RuntimeError("islink not supported for Windows remote systems")
 		else:
 			return type(self.__path)(path).is_symlink()
 
