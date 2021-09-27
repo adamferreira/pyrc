@@ -354,8 +354,7 @@ class FileSystem(object):
 	def islink(self, path:str)->bool:
 		if self.is_remote():
 			if self.is_unix():
-				# TODO
-				raise RuntimeError("islink not supported for Unix remote systems")
+				return "ok" in self.__remote.check_output(f"[[ -L {path} ]] && echo \"ok\"")
 			else:
 				# TODO
 				raise RuntimeError("islink not supported for Windows remote systems")
