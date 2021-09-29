@@ -1,5 +1,8 @@
 from .testutils import *
 
+THIS_FILE = os.path.realpath(__file__)
+THIS_DIR = os.path.dirname(THIS_FILE)
+
 
 def test_filesystem_obj_creation(filesystem):
     path, is_local = filesystem.path, filesystem.is_local
@@ -46,9 +49,47 @@ def test_file_creation(filesystem):
         create_sparse_file(newfile, newfile_size)
         assert path.isfile(newfile)
         assert os.stat(newfile).st_size == newfile_size
-        # Detroy local file
+        # Destroy local file
         path.unlink(newfile, missing_ok=False)
         assert not path.isfile(newfile)
+
+
+@pytest.mark.depends(on=["test_file_creation"])
+def test_file_upload(filesystem):
+    """[summary]
+
+    Args:
+        filesystem ([type]): [description]
+    """
+    path, workspace = filesystem.path, filesystem.workspace
+    if not path.is_remote():
+        return 
+
+    remote_path = path
+    local_path = pysys.FileSystem()
+    remote_workspace = workspace
+    local_workspace = THIS_DIR
+    assert remote_path != local_path
+
+    # Create local file before upload
+    local_filepath = local_path.join(local_workspace, "newfile.txt")
+    assert not path.isfile(local_filepath)
+    create_sparse_file(local_filepath, 10 * 8 * (10**6))
+    assert local_path.isfile(local_filepath)
+
+    # Define remote (not existing yet) file path
+    remote_filepath = remote_path.join(remote_workspace, "newfile.txt")
+    # Check that remote workspace is valid and remote file is non-existing
+    assert remote_path.isdir(remote_workspace)
+    assert not remote_path.isfile(remote_filepath)
+
+    # Upload file to remote workspace
+    
+
+    # Destroy local file
+    local_path.unlink(local_filepath, missing_ok=False)
+    assert not local_path.isfile(local_filepath)
+
 
 
 
