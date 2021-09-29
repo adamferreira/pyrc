@@ -42,9 +42,9 @@ def test_file_creation(filesystem):
     path, workspace = filesystem.path, filesystem.workspace
     newfile = path.join(workspace, "newfile.txt")
     newfile_size = 10 * 8 * (10**6)
-    assert not path.isfile(newfile)
 
     if not path.is_remote():
+        assert not path.isfile(newfile)
         # Local file creation
         create_sparse_file(newfile, newfile_size)
         assert path.isfile(newfile)
@@ -84,9 +84,13 @@ def test_file_upload(filesystem):
     assert not remote_path.isfile(remote_filepath)
 
     # Upload file to remote workspace
-    
+    remote_path.connector.upload(local_realpath = local_filepath, remote_path = remote_filepath)
+    assert remote_path.isfile(remote_filepath)
+    # Delete remote file
+    remote_path.unlink(remote_filepath, missing_ok=False)
+    assert not remote_path.isfile(remote_filepath)
 
-    # Destroy local file
+    # Delete local file
     local_path.unlink(local_filepath, missing_ok=False)
     assert not local_path.isfile(local_filepath)
 
