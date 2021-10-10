@@ -257,7 +257,7 @@ class FileSystem(object):
 			missing_ok (bool, optional): [description]. Defaults to False.
 		"""
 		if self.is_remote():
-			if not missing_ok and (not self.isfile(path) or not self.islink(path)):
+			if not missing_ok and not (self.isfile(path) or self.islink(path)):
 				raise FileNotFoundError(f"Remote file {path} does not exist.")
 
 			if self.is_unix():
