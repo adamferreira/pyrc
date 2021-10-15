@@ -58,6 +58,12 @@ class FileSystemTree(object):
 
 		return string
 
+	def __len__(self):
+		"""
+		Total number of files and folders inside the tree
+		"""
+		return sum([len(n.files) + len(n.dirs.keys()) for n in self.nodes])
+
 	def nodes(self) -> 'List[FileSystemTree]':
 		nodes = [self]
 		stack = list(self.dirs.values())
@@ -283,7 +289,8 @@ class FileSystem(object):
 			else:
 				return self.__remote.check_output(f"dir {path}")
 		else:
-			return FileSystemTree.get_root(path)
+			root = FileSystemTree.get_root(path)
+			return root.files + list(root.dirs.keys())
 
 	def lsdir(slef, path:str)-> 'FileSystemTree':
 		"""[summary]

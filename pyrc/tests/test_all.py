@@ -86,6 +86,7 @@ def test_file_upload(filesystem):
     # Upload file to remote workspace
     remote_path.connector.upload(local_realpath = local_filepath, remote_path = remote_filepath)
     assert remote_path.isfile(remote_filepath)
+
     # Delete remote file
     remote_path.unlink(remote_filepath, missing_ok=False)
     assert not remote_path.isfile(remote_filepath)
@@ -94,7 +95,15 @@ def test_file_upload(filesystem):
     local_path.unlink(local_filepath, missing_ok=False)
     assert not local_path.isfile(local_filepath)
 
+@pytest.mark.depends(on=["test_file_upload"])
+def test_ls(filesystem):
+    path, workspace = filesystem.path, filesystem.workspace
 
+    files_and_folders = path.ls(workspace)
+    assert len(files_and_folders) != 0
 
+    for file_or_folder in files_and_folders:
+        #print(file_or_folder)
+        assert path.isfile(path.join(workspace, file_or_folder)) or path.isdir(path.join(workspace, file_or_folder))
 
     
