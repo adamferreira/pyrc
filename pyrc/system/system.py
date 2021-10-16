@@ -218,8 +218,12 @@ class FileSystem(object):
 				out, err = self.__remote.exec_command(cmd = f"mkdir {flag} {path}", event = event)
 			else: # No need for -p flag in Windows
 				out, err = self.__remote.exec_command(cmd = f"mkdir {path}", event = event)
-			if len(err) > 1:
-				raise RuntimeError('\n'.join(err))
+
+			if err[0] != '':
+				if "File exists" in "".join(err):
+					raise FileExistsError('\n'.join(err))
+				else:
+					raise RuntimeError('\n'.join(err))
 		else:
 			newpath = type(self.__path)(path)
 			newpath.mkdir(mode=mode, parents=parents, exist_ok=exist_ok)
@@ -227,7 +231,7 @@ class FileSystem(object):
 	def rmdir(self, path:str, recur:bool = False):
 		# TODO doc
 		# Keep rmdir and rm_tree in a single method ?
-		if self.remote():
+		if self.is_remote():
 			if self.is_unix():
 				cmd_ = "rm -rf" if recur else "rmdir"
 				out, err = self.exec_command(
@@ -248,7 +252,7 @@ class FileSystem(object):
 				
 			newpath = type(self.__path)(path)
 			if recur:
-				rm_treen(newpath)
+				rm_tree(newpath)
 			else:
 				newpath.rmdir()
 

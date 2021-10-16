@@ -31,6 +31,76 @@ def test_current_location(filesystem):
     assert not path.islink(workspace)
 
 @pytest.mark.depends(on=["test_current_location"])
+def test_ls(filesystem):
+    path, workspace = filesystem.path, filesystem.workspace
+
+    files_and_folders = path.ls(workspace)
+    assert len(files_and_folders) != 0
+
+    for file_or_folder in files_and_folders:
+        assert path.isfile(path.join(workspace, file_or_folder)) or path.isdir(path.join(workspace, file_or_folder))
+
+@pytest.mark.depends(on=["test_ls"])
+def test_mkdir(filesystem):
+    """
+    Simple test of creatir and deleting empty directory inside the workspace
+    Args:
+        filesystem ([type]): [description]
+    """
+    path, workspace = filesystem.path, filesystem.workspace
+    # Basic mkdir and rmdir testing
+    dirpath = path.join(workspace, "dummy_dir")
+    assert not path.isdir(dirpath)
+    path.mkdir(dirpath)
+    assert path.isdir(dirpath)
+    path.rmdir(dirpath)
+    assert not path.isdir(dirpath)
+
+    # Testing recreating existing directory
+    path.mkdir(dirpath, exist_ok = False)
+    assert path.isdir(dirpath)
+    try:
+        path.mkdir(dirpath, exist_ok = False)
+    except Exception as e:
+        print(e)
+        assert type(e) == RuntimeError or type(e) == FileExistsError
+    
+    path.mkdir(dirpath, exist_ok = True)
+    assert path.isdir(dirpath)
+    path.rmdir(dirpath)
+    assert not path.isdir(dirpath)
+
+
+
+@pytest.mark.depends(on=["test_mkdir"])
+def test_mkpath(filesystem):
+    """
+    Testing the abitlity to create (and delete) the tree:
+        a
+            b
+                c
+    In only one mkdir and rmdir command
+    Args:
+        filesystem ([type]): [description]
+    """
+    path, workspace = filesystem.path, filesystem.workspace
+    assert path.isdir(workspace)
+    assert not path.isdir(path.join(workspace, "a"))
+    assert not path.isdir(path.join(workspace, "a", "b"))
+    assert not path.isdir(path.join(workspace, "a", "b", "c"))
+    path.mkdir(path.join(workspace, "a", "b", "c"), parents = True)
+    assert path.isdir(path.join(workspace, "a"))
+    assert path.isdir(path.join(workspace, "a", "b"))
+    assert path.isdir(path.join(workspace, "a", "b", "c"))
+    path.rmdir(path.join(workspace, "a"), recur = True)
+    assert not path.isdir(path.join(workspace, "a"))
+    assert not path.isdir(path.join(workspace, "a", "b"))
+    assert not path.isdir(path.join(workspace, "a", "b", "c"))
+    assert path.isdir(workspace)
+    
+
+
+@pytest.mark.depends(on=["test_mkpath"])
 def test_file_creation(filesystem):
     """[summary]
     Create (only on local machine) a non-zero file 
@@ -94,16 +164,5 @@ def test_file_upload(filesystem):
     # Delete local file
     local_path.unlink(local_filepath, missing_ok=False)
     assert not local_path.isfile(local_filepath)
-
-@pytest.mark.depends(on=["test_file_upload"])
-def test_ls(filesystem):
-    path, workspace = filesystem.path, filesystem.workspace
-
-    files_and_folders = path.ls(workspace)
-    assert len(files_and_folders) != 0
-
-    for file_or_folder in files_and_folders:
-        #print(file_or_folder)
-        assert path.isfile(path.join(workspace, file_or_folder)) or path.isdir(path.join(workspace, file_or_folder))
 
     
