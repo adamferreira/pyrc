@@ -63,13 +63,14 @@ class SSHConnector:
 	@property
 	def port(self) -> int:
 		return str(self._port)
-
+	"""
 	@property
 	def pwd(self):
 		return self._cwd
+
 	def cd(self, directory:str):
 		self._cwd = directory
-
+	"""
 	@property
 	def askpwd(self) -> bool:
 		return self._askpwd
@@ -114,7 +115,10 @@ class SSHConnector:
 		self._port:int = port
 		self._askpwd:bool = askpwd
 		self._environ:SSHConnector.SSHEnvironDict = None
-		self._cwd:str = "" # Currend directory
+		# Current working directory
+		self.__cwd:str = ""
+		# Previous current working directory
+		self.__pcwd:str = ""
 		self._sshcon = None
 		self._scp = None
 
@@ -134,7 +138,7 @@ class SSHConnector:
 		self.__dirdownload_event = pyevent.RichRemoteDirDownloadEvent(self)
 		self.__cmd_event = pyevent.RemoteCommandPrintEvent(self)
 
-	def __exec_command(self, cmd:str, environment:dict = None):
+	def __exec_command(self, cmd:str, cwd:str = "", environment:dict = None):
 		env_vars=""
 		if environment is not None:
 			if self.path.is_unix():
@@ -142,11 +146,11 @@ class SSHConnector:
 			else:
 				raise NotImplemented("Cannot set environment variables for Windows remote systems")
 
-		stdin, stdout, stderr = self._sshcon.exec_command(env_vars + "cd " + self._cwd + ";" + cmd, environment = environment, get_pty=False)
+		stdin, stdout, stderr = self._sshcon.exec_command(env_vars + "cd " + cwd + ";" + cmd, environment = environment, get_pty=False)
 		return stdin, stdout, stderr
 
-	def exec_command(self, cmd:str, environment:dict = None, event:pyevent.Event = None):
-		stdin, stdout, stderr = self.__exec_command("cd " + self._cwd + ";" + cmd, environment)
+	def exec_command(self, cmd:str, cwd:str = "", environment:dict = None, event:pyevent.Event = None):
+		stdin, stdout, stderr = self.__exec_command(cmd, cwd, environment)
 		# Blocking event
 		event = self.__cmd_event if event is None else event
 		event.begin(cmd, stdin, stdout, stderr)
@@ -230,7 +234,7 @@ class SSHConnector:
 		"""
 		self.filesupload_event.begin(local_paths)
 		scp = SCPClient(self._sshcon.get_transport(), progress = self.filesupload_event.progress)
-		scp.put(local_path = local_paths, recursive=False, remote_path = remote_path)
+		scp.put(local_paths, recursive=False, remote_path = remote_path)
 		self.filesupload_event.end()
 		scp.close()
 	
@@ -307,6 +311,7 @@ class SSHConnector:
 		stdin, stdout, stderr = self.__exec_command("unzip " + flag + " \"" + remote_archive + "\" -d \"" + remote_path + "\"", print_output = True)
 
 	def compress_folder(self, remote_folder_path, sep = "/"):
+		return NotImplemented
 		if self.remote_file_exists(remote_folder_path):
 			tmpwd = self._cwd
 			self.cd(remote_folder_path)
