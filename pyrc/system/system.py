@@ -387,19 +387,19 @@ class FileSystem(object):
 			f = open(path,"w")
 			f.close()
 
-	def exec_command(self, cmd:str, flags:'list[str]' = [], environment:dict = None, event:pyevent.Event = None):
+	def exec_command(self, cmd:str, flags:'list[str]' = [], cwd:str = "", environment:dict = None, event:pyevent.Event = None):
 		full_cmd = flags.copy() if flags is not [] else []
 		full_cmd.insert(0, cmd)
 		full_cmd = " ".join(full_cmd)
 		if self.is_remote():
 			if _CMDEXEC_REMOTE_ENABLED_ or True:
-				return self.__remote.exec_command(full_cmd, environment, event)
+				return self.__remote.exec_command(full_cmd, cwd, environment, event)
 			else:
 				raise RuntimeError("Could not load remote connection.")
 		else:
 			if _CMDEXEC_SUBPROCESS_ENABLED_:
 				event = pyevent.CommandPrintEvent(self) if event is None else event
-				p = Popen([full_cmd], stdin = PIPE, stdout = PIPE, stderr = PIPE, env = environment, shell = True)
+				p = Popen([f"cd {cwd};{full_cmd}"], stdin = PIPE, stdout = PIPE, stderr = PIPE, env = environment, shell = True)
 				event.begin(cmd, p.stdin, p.stdout, p.stderr)
 				#os.system(full_cmd) #TODO use os.system for realtime python stdout feed ?
 				return event.end()

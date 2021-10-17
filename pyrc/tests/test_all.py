@@ -48,6 +48,22 @@ def test_ls(filesystem):
         assert path.isfile(path.join(workspace, file_or_folder)) or path.isdir(path.join(workspace, file_or_folder))
 
 @pytest.mark.depends(on=["test_ls"])
+def test_ls_cmd_unix(filesystem):
+    path, workspace = filesystem.path, filesystem.workspace
+
+    # Current test does not work on windows
+    if not path.is_unix():
+        return 
+
+    files_and_folders_1 = path.ls(workspace)
+    files_and_folders_2 = path.exec_command(f"ls {workspace}", event = get_store_event())[0]
+    files_and_folders_3 = path.exec_command("ls", cwd = workspace, event = get_store_event())[0]
+
+    assert sorted(files_and_folders_1) == sorted(files_and_folders_2)
+    assert sorted(files_and_folders_2) == sorted(files_and_folders_3)
+    
+
+@pytest.mark.depends(on=["test_ls"])
 def test_mkdir(filesystem):
     """
     Simple test of creatir and deleting empty directory inside the workspace
