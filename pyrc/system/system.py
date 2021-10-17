@@ -205,6 +205,7 @@ class FileSystem(object):
 			exist_ok (bool, optional): [description]. Defaults to False.
 
 		Raises:
+			FileExistsError: [description]
 			RuntimeError: [description]
 			OSError: [description]
 		"""
@@ -371,6 +372,20 @@ class FileSystem(object):
 				raise RuntimeError("islink not supported for Windows remote systems")
 		else:
 			return type(self.__path)(path).is_symlink()
+
+	def touch(self, path:str):
+		parent = self.dirname(path)
+		if not self.isdir(parent):
+			raise RuntimeError(f"Path {parent} is not a valid directory.")
+
+		if self.is_remote():
+			if self.is_unix():
+				self.exec_command(f"touch {path}")
+			else:
+				self.exec_command(f"call > {path}")
+		else:
+			f = open(path,"w")
+			f.close()
 
 	def exec_command(self, cmd:str, flags:'list[str]' = [], environment:dict = None, event:pyevent.Event = None):
 		full_cmd = flags.copy() if flags is not [] else []

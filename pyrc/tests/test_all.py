@@ -30,6 +30,13 @@ def test_current_location(filesystem):
     assert path.isdir(workspace)
     assert not path.islink(workspace)
 
+@pytest.mark.depends(on=["test_local_path_joining"])
+def test_path_info(filesystem):
+    path, workspace = filesystem.path, filesystem.workspace
+    assert path.basename(path.join(workspace, "newfile.txt")) == "newfile.txt"
+    assert path.dirname(path.join(workspace, "newfile.txt")) == workspace
+
+
 @pytest.mark.depends(on=["test_current_location"])
 def test_ls(filesystem):
     path, workspace = filesystem.path, filesystem.workspace
@@ -123,8 +130,21 @@ def test_file_creation(filesystem):
         path.unlink(newfile, missing_ok=False)
         assert not path.isfile(newfile)
 
+@pytest.mark.depends(on=["test_file_creation", "test_path_info"])
+def test_touch(filesystem):
+    path, workspace = filesystem.path, filesystem.workspace
+    newfile = path.join(workspace, "newfile.txt")
 
-@pytest.mark.depends(on=["test_file_creation"])
+    # Create file, test it, and delete it
+    # Deletion is already tested by 'test_file_creation'
+    assert not path.isfile(newfile)
+    path.touch(newfile)
+    assert path.isfile(newfile)
+    path.unlink(newfile)
+    assert not path.isfile(newfile)
+
+
+@pytest.mark.depends(on=["test_touch"])
 def test_file_upload(filesystem):
     """[summary]
 
