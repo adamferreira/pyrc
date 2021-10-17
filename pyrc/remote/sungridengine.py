@@ -1,6 +1,6 @@
 import pyrc.remote as pyrm
 
-class SunGridEngineLauncher(pyrm.CommandExecutor):
+class SunGridEngineLauncher(object):
     def __init__(self):
         # CommandExecutor(self)
         self.sgecmd = pylc.SunGridEngineCommand()
