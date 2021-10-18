@@ -11,7 +11,7 @@ from pathlib import Path, PosixPath, PureWindowsPath, PurePosixPath, WindowsPath
 
 # ------------------ SSHConnector
 class SSHConnector:
-
+	"""
 	class SSHEnvironDict(dict[str:str]):
 		# if the connection is alredy open, we get all remote env vars
 		def __init__(self, remote):
@@ -35,7 +35,10 @@ class SSHConnector:
 			remoteenvs = self.remote._printenv()
 			for key,val in remoteenvs.items():
 				super().__setitem__(key, val)
-
+	"""
+	class SSHEnvironDict(object):
+		def toto():
+			return None
 
 	""" 
 		MEMBERS
