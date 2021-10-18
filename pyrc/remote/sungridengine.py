@@ -1,12 +1,12 @@
 import pyrc
-import pyrc.remote as pyrm
+from remotecon import SSHConnector
 
 class SunGridEngineLauncher(object):
     def __init__(self):
         # CommandExecutor(self)
         self.sgecmd = pylc.SunGridEngineCommand()
 
-    def qstat(self, flags: 'list[str]' = [], job_prefix: str = None, remote: pyrm.SSHConnector = None, print_output: bool = False, print_input: bool = True) -> 'list[dict[str:str]]':
+    def qstat(self, flags: 'list[str]' = [], job_prefix: str = None, remote: SSHConnector = None, print_output: bool = False, print_input: bool = True) -> 'list[dict[str:str]]':
         """[summary]
             This perferms a formated qstats command on the remote machine.
             The format is the following : 
