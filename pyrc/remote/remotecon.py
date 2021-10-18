@@ -359,7 +359,7 @@ class SSHConnector:
 	def _env(self, var:str) -> str:
 		return self.check_output(f"python -c \"import os; print(os.environ[\'{var}\'])\"")[0]
 
-	def _printenv(self) -> dict[str:str]:
+	def _printenv(self) -> 'dict[str:str]':
 		# windows : out = return self.check_output("python -c \"import os; print(os.environ)\"")
 		out = self.check_output("printenv")
 		return {env.split("=")[0] : ''.join(env.split("=")[1:]) for env in out}
