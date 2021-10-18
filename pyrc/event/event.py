@@ -1,5 +1,5 @@
 import rich
-import pyrc.event.progress as pyprogress
+from pyrc.event.progress import RemoteFileTransfer
 
 class Event(object):
     @property
@@ -78,7 +78,7 @@ class RichRemoteFileTransferEvent(FileTransferEvent):
         self.__progress = None
 
     def begin(self, *args, **kwargs):
-        self.__progress = pyprogress.RemoteFileTransfer(*args, self.caller.user, self.caller.hostname)
+        self.__progress = RemoteFileTransfer(*args, self.caller.user, self.caller.hostname)
         return self.__progress.start()
 
     def end(self, *args, **kwargs):
