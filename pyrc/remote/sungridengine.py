@@ -1,3 +1,4 @@
+import pyrc
 import pyrc.remote as pyrm
 
 class SunGridEngineLauncher(object):
