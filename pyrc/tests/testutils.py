@@ -7,6 +7,8 @@ import pyrc.event.event as pyevent
 THIS_FILE = os.path.realpath(__file__)
 THIS_DIR = os.path.dirname(THIS_FILE)
 
+def get_store_event():
+    return pyevent.CommandStoreEvent(THIS_FILE)
 
 def create_sparse_file(path:str, bytes:int) -> None:
     f = open(path,"wb")
@@ -14,6 +16,14 @@ def create_sparse_file(path:str, bytes:int) -> None:
     f.write(b"\0")
     f.close()
 
+def create_artelys_filesystemtest():
+    post = pyrm.create_default_connectors()["post"]
+    post.open()
+    return FileSystemTest(
+        path = post.path,
+        workspace = "/data/adferrei/COE",
+        is_local = False
+    )
 
 class FileSystemTest(object):
     def __init__(self, path:pysys.FileSystem, workspace:str, is_local:bool):
@@ -22,7 +32,8 @@ class FileSystemTest(object):
         self.is_local = is_local
 
 FILESYSTEM_OBJECTS = [
-    FileSystemTest(pysys.FileSystem(), THIS_DIR, True)
+    FileSystemTest(pysys.FileSystem(), THIS_DIR, True),
+    create_artelys_filesystemtest()
 ]
 
 # All test will be called for each connectors !

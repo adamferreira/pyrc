@@ -43,3 +43,11 @@ def create_default_connectors()  -> 'dict[str:SSHConnector]':
         ssh_config_file = os.path.join("C:", "Users", os.environ["USER"], ".ssh", "config")
 
     return create_connectors(ssh_config_file, sshkey=None)
+
+class RemotePyrc(object):
+	def __init__(self, remote:SSHConnector, python_remote_install:str = None):
+		assert remote.is_opent()
+		self.__githuburl = "https://github.com/adamferreira/pyrc.git"
+
+    #def get_python_version(self):
+    #    return major, minor, patch
