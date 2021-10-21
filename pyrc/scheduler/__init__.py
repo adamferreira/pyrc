@@ -1,1 +1,1 @@
-from .sungridengine import SunGridEngineCommand
+from .sungridengine import SunGridEngine

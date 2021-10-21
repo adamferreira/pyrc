@@ -1,7 +1,16 @@
+import re
+class SunGridEngine(object):
 
-class SunGridEngineCommand:
+    def get_submission_info(line:str) -> 'tuple[str,str]':
+        m = re.match("Your job (?P<jid>([0-9]+)) \(\"(?P<name>(.)*)\"\) has been submitted", line)
+        if m in None:
+            return None, None
+        else:
+            return m.group("jid"), m.group("name")
+
+
     # tips for selecting specific sge id : qstat | grep "^[[:space:]]*$ID[[:space:]]"
-    def fancyqstatcmd(self, flags: 'list[str]' = [], job_prefix: str = None) -> 'str':
+    def fancyqstatcmd(flags: 'list[str]' = [], job_prefix: str = None) -> 'str':
         """[summary]
             This perferms a formated qstats command on the remote machine.
             The format is the following : 
