@@ -19,7 +19,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     package_dir={"pyrc": "pyrc"},
-    packages = ["pyrc", "pyrc.remote", "pyrc.system", "pyrc.event"],
+    packages = ["pyrc", "pyrc.remote", "pyrc.system", "pyrc.event", "pyrc.scheduler"],
     test_suite="pyrc.tests",
     #packages=setuptools.find_packages(where="pyrc"),
     python_requires=">=3.0",
