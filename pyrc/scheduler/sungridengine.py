@@ -68,6 +68,7 @@ class SunGridEngine(object):
         print(qstatlines)
 
         for line in qstatlines:
+            print(line)
             infos = []
             for item in line.split(' '):
                 if len(item) > 0:
