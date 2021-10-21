@@ -3,7 +3,7 @@ class SunGridEngine(object):
 
     def get_submission_info(line:str) -> 'tuple[str,str]':
         m = re.match("Your job (?P<jid>([0-9]+)) \(\"(?P<name>(.)*)\"\) has been submitted", line)
-        if m in None:
+        if m is None:
             return None, None
         else:
             return m.group("jid"), m.group("name")
