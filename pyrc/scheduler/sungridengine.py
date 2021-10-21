@@ -65,6 +65,7 @@ class SunGridEngine(object):
             environment = environment,
             event = pyevent.CommandStoreEvent(path.connector) # hard coded store event
         )
+        print(qstatlines)
 
         for line in qstatlines:
             infos = []
