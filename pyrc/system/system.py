@@ -210,7 +210,7 @@ class FileSystem(object):
 			OSError: [description]
 		"""
 		if self.is_remote():
-			event = pyevent.CommandStoreEvent(self.__remote)
+			event = pyevent.CommandStoreEvent()
 			out, err = [], []
 			if self.is_unix():
 				flag = " -p " if parents or exist_ok else ""
@@ -237,7 +237,7 @@ class FileSystem(object):
 				cmd_ = "rm -rf" if recur else "rmdir"
 				out, err = self.exec_command(
 					cmd = f"{cmd_} {path}",
-					event = pyevent.CommandStoreEvent(self.__remote)
+					event = pyevent.ErrorRaiseEvent()
 				)
 			else:
 				raise RuntimeError("rmdir is only available on unix remote systems.")
@@ -274,7 +274,7 @@ class FileSystem(object):
 			if self.is_unix():
 				out, err = self.exec_command(
 					cmd = f"rm -f {path}",
-					event = pyevent.CommandStoreEvent(self.__remote)
+					event = pyevent.ErrorRaiseEvent()
 				)
 			else:
 				raise RuntimeError("unlink is only available on unix remote systems.")
@@ -433,7 +433,7 @@ class RemotePython(object):
 		self.venv = python_virtual_env_path
 		out, err = self.__remotefs.exec_command(
 			cmd = f"{self.python} -m venv {self.venv}", 
-			event = pyevent.CommandStoreEvent(self.__remote)
+			event = pyevent.ErrorRaiseEvent()
 		)
 		self.python = self.__remotefs.join(python_virtual_env_path, "python")
 
@@ -482,10 +482,7 @@ class RemotePython(object):
 		"""
 		out, err = self.exec_command(
 			pycmd = "import sys; print(sys.version_info[0]); print(sys.version_info[1]); print(sys.version_info[2])", 
-			event = pyevent.CommandStoreEvent(self.__remotefs))
-
-		if len(err) > 0:
-			raise RuntimeError("\n".join(err))
+			event = pyevent.ErrorRaiseEvent())
 
 		return int(out[0]), int(out[1]), int(out[2])
 

@@ -76,7 +76,7 @@ class CommandStorer(Event):
 #        self.progress(output.strip())
 #rc = process.poll()
 class CommandScrapper(Event):
-    def __init__(self, caller, *args, **kwargs):
+    def __init__(self, caller = None, *args, **kwargs):
         Event.__init__(self, caller)
         self._errflux = None
 
@@ -145,6 +145,17 @@ class CommandStoreEvent(CommandStorer, CommandScrapper):
         CommandScrapper.end(self)
         return CommandStorer.end(self)
 
+class ErrorRaiseEvent(CommandStoreEvent):
+    def __init__(self, caller = None, *args, **kwargs):
+        CommandStoreEvent.__init__(self, caller)
+
+    def end(self):
+        out, err = CommandStoreEvent.end(self)
+        if len(err) > 0:
+            raise RuntimeError("\n".join(err))
+        return  out, err
+
+
 class CommandPrettyPrintEvent(CommandStoreEvent):
     def __init__(self, caller, print_input = True, print_errors = False, *args, **kwargs):
         CommandStoreEvent.__init__(self, caller)
@@ -153,7 +164,7 @@ class CommandPrettyPrintEvent(CommandStoreEvent):
 
     def begin(self, cmd, cwd, stdin, stdout, stderr):
         CommandStoreEvent.begin(self, cmd, cwd, stdin, stdout, stderr)
-        
+
         if self._print_input:
             if self.caller is not None and self.caller.is_remote():
                 print(bcolors.OKGREEN + f"{self.caller.connector.user}@{self.caller.connector.hostname}" + bcolors.ENDC, end=":")
