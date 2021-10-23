@@ -32,7 +32,7 @@ class SSHConnector:
 
 		# Get all remote env vars
 		def __load_env(self):
-			remoteenvs = self.remote._printenv()
+			remoteenvs = self.remote.printenv()
 			for key,val in remoteenvs.items():
 				super().__setitem__(key, val)
 	
@@ -355,7 +355,7 @@ class SSHConnector:
 	def _env(self, var:str) -> str:
 		return self.check_output(f"python -c \"import os; print(os.environ[\'{var}\'])\"")[0]
 
-	def _printenv(self) -> 'dict[str:str]':
+	def printenv(self) -> 'dict[str:str]':
 		# windows : out = return self.check_output("python -c \"import os; print(os.environ)\"")
 		out = self.check_output("printenv")
 		return {env.split("=")[0] : ''.join(env.split("=")[1:]) for env in out}
