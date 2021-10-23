@@ -112,7 +112,7 @@ class SunGridEngine(object):
         mail:str = None,
         parallel_env:str = None,
         holds:'list[str]' = [],
-        event:pyevent.Event = None,
+        event:pyevent.CommandStoreEvent = None,
     ) -> str:
 	    # For some reason SGE is using its own script interpreter
 	    # Which is not exactly bash syntax and may require using 'sed'
@@ -124,8 +124,8 @@ class SunGridEngine(object):
         qsubcmd += f" -N {jobname}" if (jobname is not None) else ""
         qsubcmd += f" -o {log_file}" if (log_file is not None) else ""
         qsubcmd += f" -e {err_file}" if (err_file is not None) else ""
-        qsubcmd += f" -l h_tr {maximum_run_time}"
-        qsubcmd += f" -wd {working_directory}" if (working_directory is not None) else "-cwd"
+        #qsubcmd += f" -l h_tr {maximum_run_time}"
+        qsubcmd += f" -wd {working_directory}" if (working_directory is not None) else " -cwd "
         qsubcmd += f" -m ea -M {mail}" if (mail is not None) else ""
 
         qsubcmd += (" -v " + ",".join(env_vars)) if (len(env_vars) > 0) else ""
@@ -136,10 +136,11 @@ class SunGridEngine(object):
 
         out, err = path.exec_command(
             cmd = qsubcmd,
-            cwd = working_directory,
+            cwd = "" if working_directory is None else working_directory,
             environment = None, # Qsub doesnt need env to be launch as the script run in separate shell env,
             event = pyevent.CommandStoreEvent(path.connector) if (event is None) else event
         )   
-        print(qsubcmd, out, err)     
 
-        return qsubcmd
+        jid, jname = SunGridEngine.get_submission_info(out[0])
+
+        return jid, qsubcmd
