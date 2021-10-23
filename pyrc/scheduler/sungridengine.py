@@ -124,21 +124,21 @@ class SunGridEngine(object):
         qsubcmd += f" -N {jobname}" if (jobname is not None) else ""
         qsubcmd += f" -o {log_file}" if (log_file is not None) else ""
         qsubcmd += f" -e {err_file}" if (err_file is not None) else ""
-        #qsubcmd += f" -l h_tr {maximum_run_time}"
+        qsubcmd += f" -l h_rt={maximum_run_time}"
         qsubcmd += f" -wd {working_directory}" if (working_directory is not None) else " -cwd "
         qsubcmd += f" -m ea -M {mail}" if (mail is not None) else ""
 
         qsubcmd += (" -v " + ",".join(env_vars)) if (len(env_vars) > 0) else ""
         qsubcmd += (" -hold_jid " + ",".join(holds)) if (len(holds) > 0) else ""
 
-        qsubcmd += f" {bash_script} "
+        qsubcmd += f" {bash_script}"
         qsubcmd += (" " + " ".join(script_parameters)) if (len(script_parameters) > 0) else ""
 
         out, err = path.exec_command(
             cmd = qsubcmd,
             cwd = "" if working_directory is None else working_directory,
             environment = None, # Qsub doesnt need env to be launch as the script run in separate shell env,
-            event = pyevent.CommandStoreEvent(path.connector) if (event is None) else event
+            event = pyevent.CommandPrettyPrintEvent(path, print_input=True, print_errors=True) if (event is None) else event
         )   
 
         jid, jname = SunGridEngine.get_submission_info(out[0])
