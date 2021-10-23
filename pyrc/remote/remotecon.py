@@ -151,7 +151,7 @@ class SSHConnector:
 		return event.end()
 
 	def check_output(self, cmd:str,  environment:dict = None):
-		return self.exec_command(cmd=cmd, environment = environment, event = pyevent.CommandStoreEvent(self))[0]
+		return self.exec_command(cmd=cmd, environment = environment, event = pyevent.ErrorRaiseEvent(self))[0]
 
 	def open(self):
 		"""[summary]
