@@ -11,7 +11,7 @@ from pathlib import Path, PosixPath, PureWindowsPath, PurePosixPath, WindowsPath
 
 # ------------------ SSHConnector
 class SSHConnector:
-	"""
+	
 	class SSHEnvironDict(dict[str:str]):
 		# if the connection is alredy open, we get all remote env vars
 		def __init__(self, remote):
@@ -35,11 +35,7 @@ class SSHConnector:
 			remoteenvs = self.remote._printenv()
 			for key,val in remoteenvs.items():
 				super().__setitem__(key, val)
-	"""
-	class SSHEnvironDict(object):
-		def toto():
-			return None
-
+	
 	""" 
 		MEMBERS
 	"""
@@ -183,7 +179,7 @@ class SSHConnector:
 		# SCP connection
 		self._scp = SCPClient(self._sshcon.get_transport())
 		# Load remote env vars
-		self._environ = SSHConnector.SSHEnvironDict(self)
+		self._environ = None #SSHConnector.SSHEnvironDict(self)
 		
 		# Load file system now that the connexion is open
 		self.__path = FileSystem(self)
