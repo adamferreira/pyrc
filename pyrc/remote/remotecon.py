@@ -101,10 +101,6 @@ class SSHConnector:
 	def dirdownload_event(self):
 		return self.__dirdownload_event
 
-	@property
-	def cmd_event(self):
-		return self.__cmd_event
-
 
 	def __init__(self, user:str, hostname:str, sshkey:str, port:int = None, proxycommand:str = None, askpwd:bool = False):
 		self._user:str = user
@@ -135,7 +131,6 @@ class SSHConnector:
 		self.__dirupload_event = pyevent.RichRemoteDirUploadEvent(self)
 		self.__filesdownload_event = pyevent.FileTransferEvent(self)
 		self.__dirdownload_event = pyevent.RichRemoteDirDownloadEvent(self)
-		self.__cmd_event = pyevent.RemoteCommandPrintEvent(self)
 
 	def __exec_command(self, cmd:str, cwd:str = "", environment:dict = None):
 		env_vars=""
@@ -151,8 +146,8 @@ class SSHConnector:
 	def exec_command(self, cmd:str, cwd:str = "", environment:dict = None, event:pyevent.Event = None):
 		stdin, stdout, stderr = self.__exec_command(cmd, cwd, environment)
 		# Blocking event
-		event = self.__cmd_event if event is None else event
-		event.begin(cmd, stdin, stdout, stderr)
+		event = pyevent.CommandPrettyPrintEvent(self.path, print_input=True, print_errors=True) if event is None else event
+		event.begin(cmd, cwd, stdin, stdout, stderr)
 		return event.end()
 
 	def check_output(self, cmd:str,  environment:dict = None):
