@@ -220,7 +220,7 @@ class FileSystem(object):
 			else: # No need for -p flag in Windows
 				out, err = self.__remote.exec_command(cmd = f"mkdir {path}", event = event)
 
-			if err[0] != '':
+			if len(err) > 0:
 				if "File exists" in "".join(err):
 					raise FileExistsError('\n'.join(err))
 				else:
@@ -398,9 +398,9 @@ class FileSystem(object):
 				raise RuntimeError("Could not load remote connection.")
 		else:
 			if _CMDEXEC_SUBPROCESS_ENABLED_:
-				event = pyevent.CommandPrintEvent(self) if event is None else event
+				event = pyevent.CommandPrettyPrintEvent(self, self.path) if event is None else event
 				p = Popen([f"cd {cwd};{full_cmd}"], stdin = PIPE, stdout = PIPE, stderr = PIPE, env = environment, shell = True)
-				event.begin(cmd, p.stdin, p.stdout, p.stderr)
+				event.begin(cmd, cwd, p.stdin, p.stdout, p.stderr)
 				#os.system(full_cmd) #TODO use os.system for realtime python stdout feed ?
 				return event.end()
 			else:
@@ -453,7 +453,7 @@ class RemotePython(object):
 		Args:
 			cmd (str): [Command to execute]
 		"""
-		event = pyevent.CommandPrintEvent(self) if event is None else event
+		event = pyevent.CommandPrettyPrintEvent(self, self.path) if event is None else event
 		venv = self.__load_venv_cmd()
 		return self.__remotefs.exec_command(
 			cmd = f"{venv} {self.python} -c \'{pycmd}\'",
@@ -462,7 +462,7 @@ class RemotePython(object):
 		)
 
 	def exec_script(self, pyscript:str, environment:dict = None, event:pyevent.Event = None):
-		event = pyevent.CommandPrintEvent(self) if event is None else event
+		event = pyevent.CommandPrettyPrintEvent(self, self.path) if event is None else event
 		venv = self.__load_venv_cmd()
 
 		if not self.__remotefs.isfile(pyscript):
