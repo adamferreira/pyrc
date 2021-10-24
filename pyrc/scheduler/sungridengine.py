@@ -140,7 +140,7 @@ class SunGridEngine(object):
             environment = None, # Qsub doesnt need env to be launch as the script run in separate shell env,
             event = pyevent.CommandPrettyPrintEvent(path, print_input=True, print_errors=True) if (event is None) else event
         )   
-
+        assert len(err) == 0
         jid, jname = SunGridEngine.get_submission_info(out[0])
 
         return jid, qsubcmd

@@ -155,8 +155,8 @@ class FileSystem(object):
 			self.__path = PosixPath()
 
 	def set_connector(self, remote:SSHConnector):
-		if self.is_remote() and not remote.is_open():
-			raise RuntimeError("Remote connector must be open")
+		#if self.is_remote() and not remote.is_open():
+		#	raise RuntimeError("Remote connector must be open")
 		self.__remote = remote
 
 
@@ -216,9 +216,9 @@ class FileSystem(object):
 				flag = " -p " if parents or exist_ok else ""
 				"""TODO make mode work on remote machine"""
 				#flag = " ".join([flag, "-m " + str(mode)])
-				out, err = self.__remote.exec_command(cmd = f"mkdir {flag} {path}", event = event)
+				out, err = self.exec_command(cmd = f"mkdir {flag} {path}", event = event)
 			else: # No need for -p flag in Windows
-				out, err = self.__remote.exec_command(cmd = f"mkdir {path}", event = event)
+				out, err = self.exec_command(cmd = f"mkdir {path}", event = event)
 
 			if len(err) > 0:
 				if "File exists" in "".join(err):
@@ -290,14 +290,16 @@ class FileSystem(object):
 		"""
 		if self.is_remote():
 			if self.is_unix():
-				return self.__remote.check_output(f"ls {path}")
+				out, err = self.exec_command(cmd = f"ls {path}", event=pyevent.ErrorRaiseEvent())
+				return out
 			else:
-				return self.__remote.check_output(f"dir {path}")
+				out, err = self.exec_command(cmd = f"dir {path}", event=pyevent.ErrorRaiseEvent())
+				return out
 		else:
 			root = FileSystemTree.get_root(path)
 			return root.files + list(root.dirs.keys())
 
-	def lsdir(slef, path:str)-> 'FileSystemTree':
+	def lsdir(self, path:str)-> 'FileSystemTree':
 		"""[summary]
 			Return files and directories in path (recursilvy) as a FileSystemTree
 		Returns:
@@ -334,7 +336,9 @@ class FileSystem(object):
 		"""
 		if self.is_remote():
 			if self.is_unix():
-				return "ok" in self.__remote.check_output(f"[[ -f {path} ]] && echo \"ok\"")
+				out, err = self.exec_command(cmd = f"[[ -f {path} ]] && echo \"ok\"", event=pyevent.ErrorRaiseEvent())
+				if len(out) == 0: return False
+				else : return "ok" in out[0]
 			else:
 				# TODO
 				raise RuntimeError("isfile not supported for Windows remote systems")
@@ -356,7 +360,9 @@ class FileSystem(object):
 		"""
 		if self.is_remote():
 			if self.is_unix():
-				return "ok" in self.__remote.check_output(f"[[ -s {path} ]] && echo \"ok\"")
+				out, err = self.exec_command(cmd = f"[[ -s {path} ]] && echo \"ok\"", event=pyevent.ErrorRaiseEvent())
+				if len(out) == 0: return False
+				else : return "ok" in out[0]
 			else:
 				# TODO
 				raise RuntimeError("isdir not supported for Windows remote systems")
@@ -366,7 +372,9 @@ class FileSystem(object):
 	def islink(self, path:str)->bool:
 		if self.is_remote():
 			if self.is_unix():
-				return "ok" in self.__remote.check_output(f"[[ -L {path} ]] && echo \"ok\"")
+				out, err = self.exec_command(cmd = f"[[ -L {path} ]] && echo \"ok\"", event=pyevent.ErrorRaiseEvent())
+				if len(out) == 0: return False
+				else : return "ok" in out[0]
 			else:
 				# TODO
 				raise RuntimeError("islink not supported for Windows remote systems")
@@ -387,19 +395,16 @@ class FileSystem(object):
 			f = open(path,"w")
 			f.close()
 
-	def exec_command(self, cmd:str, flags:'list[str]' = [], cwd:str = "", environment:dict = None, event:pyevent.Event = None):
-		full_cmd = flags.copy() if flags is not [] else []
-		full_cmd.insert(0, cmd)
-		full_cmd = " ".join(full_cmd)
+	def exec_command(self, cmd:str, cwd:str = "", environment:dict = None, event:pyevent.Event = None):
 		if self.is_remote():
 			if _CMDEXEC_REMOTE_ENABLED_ or True:
-				return self.__remote.exec_command(full_cmd, cwd, environment, event)
+				return self.__remote.exec_command(cmd, cwd, environment, event)
 			else:
 				raise RuntimeError("Could not load remote connection.")
 		else:
 			if _CMDEXEC_SUBPROCESS_ENABLED_:
 				event = pyevent.CommandPrettyPrintEvent(self, self.path) if event is None else event
-				p = Popen([f"cd {cwd};{full_cmd}"], stdin = PIPE, stdout = PIPE, stderr = PIPE, env = environment, shell = True)
+				p = Popen([f"cd {cwd};{cmd}"], stdin = PIPE, stdout = PIPE, stderr = PIPE, env = environment, shell = True)
 				event.begin(cmd, cwd, p.stdin, p.stdout, p.stderr)
 				#os.system(full_cmd) #TODO use os.system for realtime python stdout feed ?
 				return event.end()
