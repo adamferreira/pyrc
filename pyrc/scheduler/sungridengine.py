@@ -1,4 +1,4 @@
-import re
+import re, time
 import pyrc.system as pysys
 import pyrc.event as pyevent
 class SunGridEngine(object):
@@ -95,8 +95,13 @@ class SunGridEngine(object):
                 "slots": jslot
             })
 
-        return jobs
-    
+        return jobs   
+
+    def wait(path:pysys.FileSystem, jid:str, refresh:int=30):
+        job_info = SunGridEngine.qstat(path, job_prefix=jid)
+        while len(job_info) > 0:
+            time.sleep(refresh)
+            job_info = SunGridEngine.qstat(path, job_prefix=jid)
 
     def qsub(
         path:pysys.FileSystem,
