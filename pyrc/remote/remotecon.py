@@ -1,12 +1,10 @@
 import paramiko
 from scp import SCPClient, SCPException
-import logging
 import getpass
 import pyrc.event.progress as pyprogress
 import pyrc.event.event as pyevent
 from pyrc.system.system import FileSystem, FileSystemTree
 import os
-from pathlib import Path, PosixPath, PureWindowsPath, PurePosixPath, WindowsPath
 
 
 # ------------------ SSHConnector
@@ -293,9 +291,6 @@ class SSHConnector:
 			raise error
 		finally:
 			print("Downloaded", remote_file_path, "to", local_file_path)
-
-	def rm(self, remote_path, flag = ""):
-		stdin, stdout, stderr = self.__exec_command("rm " + flag + " " + remote_path)
 
 	def zip(self, remote_path, remote_archive, flag = ""):
 		stdin, stdout, stderr = self.__exec_command("zip " + flag + " \"" + remote_archive + "\" \"" + remote_path + "\"", print_output = True)

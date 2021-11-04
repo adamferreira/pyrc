@@ -382,6 +382,14 @@ class FileSystem(object):
 			return type(self.__path)(path).is_symlink()
 
 	def touch(self, path:str):
+		"""[summary]
+		Create the file empty <path>
+		Args:
+			path (str): [description]
+
+		Raises:
+			RuntimeError: if parent(path) is not a valid directory
+		"""
 		parent = self.dirname(path)
 		if not self.isdir(parent):
 			raise RuntimeError(f"Path {parent} is not a valid directory.")
@@ -410,6 +418,21 @@ class FileSystem(object):
 				return event.end()
 			else:
 				raise RuntimeError("Could not load subprocess module.")
+
+	def zip(self, path:str, archivename:str = None, flag:str = None):
+		if (not self.isdir(path)) or (not self.isfile(path)):
+			raise RuntimeError(f"Path {path} is not a file or directory.")
+
+		if self.is_remote():
+			if self.is_unix():
+				return self.exec_command(f"zip {flag} \"{archivename}.zip\" \"{path}\"")
+			else:
+				return NotImplemented
+		else:
+			import zipfile
+			z = zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED)
+			z.write(self.join(self.dirname(path), f"{archivename}.zip"))
+			z.close()
 
 
 class RemotePython(object):
