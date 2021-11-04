@@ -163,13 +163,13 @@ class CommandPrettyPrintEvent(CommandStoreEvent):
         self._print_errors = print_errors
 
     def begin(self, cmd, cwd, stdin, stdout, stderr):
-        CommandStoreEvent.begin(self, cmd, cwd, stdin, stdout, stderr)
-
         if self._print_input:
             if self.caller is not None and self.caller.is_remote():
                 print(bcolors.OKGREEN + f"{self.caller.connector.user}@{self.caller.connector.hostname}" + bcolors.ENDC, end=":")
-            print(bcolors.OKBLUE +  f"{self.cwd}" + bcolors.ENDC, end = " -> ")
-            print(bcolors.HEADER + f"$[{self.cmd}]" + bcolors.ENDC)
+            print(bcolors.OKBLUE +  f"{cwd}" + bcolors.ENDC, end = " -> ")
+            print(bcolors.HEADER + f"$[{cmd}]" + bcolors.ENDC)
+
+        CommandStoreEvent.begin(self, cmd, cwd, stdin, stdout, stderr)
 
     def progress(self, stdoutline:str, stderrline:str):
         if stdoutline != "":
