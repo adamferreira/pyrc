@@ -153,23 +153,22 @@ class SSHConnector:
 	def check_output(self, cmd:str,  environment:dict = None):
 		return self.exec_command(cmd=cmd, environment = environment, event = pyevent.ErrorRaiseEvent(self))[0]
 
-	def open(self):
+	def open(self, password:str = None, passphrase:str = None):
 		"""[summary]
 			Opens the remote connection.
 		"""
-		if self.use_proxy:
-			proxy = paramiko.ProxyCommand(self.proxycommand)
-			self._sshcon.connect(self.hostname, username=self.user, port=self.port, key_filename=self.sshkey, sock=proxy)
-		else:
-			if self.askpwd:
-				self._sshcon.connect(
-					self.hostname, 
-					username=self.user, 
-					port=self.port,
-					key_filename=self.sshkey, 
-					password=getpass.getpass(prompt=f"Password for {self.user}@{self.hostname}:"))
-			else:
-				self._sshcon.connect(self.hostname, username=self.user, port=self.port, key_filename=self.sshkey)
+		proxy = paramiko.ProxyCommand(self.proxycommand) if self.use_proxy else None
+		pwd = getpass.getpass(prompt=f"Password for {self.user}@{self.hostname}:") if self.askpwd else password
+
+		self._sshcon.connect(
+						self.hostname, 
+						username=self.user, 
+						port=self.port,
+						key_filename=self.sshkey, 
+						password=pwd,
+						passphrase=passphrase,
+						sock=proxy
+					)
 
 		# SCP connection
 		self._scp = SCPClient(self._sshcon.get_transport())
