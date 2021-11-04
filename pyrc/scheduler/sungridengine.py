@@ -116,14 +116,16 @@ class SunGridEngine(object):
         err_file:str = None,
         mail:str = None,
         parallel_env:str = None,
-        holds:'list[str]' = [],
+        on_hold:bool = False,
+        wait:'list[str]' = [],
         event:pyevent.CommandStoreEvent = None,
     ) -> str:
 	    # For some reason SGE is using its own script interpreter
 	    # Which is not exactly bash syntax and may require using 'sed'
 	    # Tu use the systems' bash use the flag : -S /bin/bash
 	    # or #$ -S /bin/bash  INSIDE the script
-        qsubcmd = "qsub -h"
+        qsubcmd = "qsub"
+        qsubcmd += f" -h" if on_hold else ""
         qsubcmd += f" -pe {parallel_env}" if (parallel_env is not None) else ""
         qsubcmd += f" -q {queue}" if (queue is not None) else ""
         qsubcmd += f" -N {jobname}" if (jobname is not None) else ""
@@ -134,7 +136,7 @@ class SunGridEngine(object):
         qsubcmd += f" -m ea -M {mail}" if (mail is not None) else ""
 
         qsubcmd += (" -v " + ",".join(env_vars)) if (len(env_vars) > 0) else ""
-        qsubcmd += (" -hold_jid " + ",".join(holds)) if (len(holds) > 0) else ""
+        qsubcmd += (" -hold_jid " + ",".join(wait)) if (len(wait) > 0) else ""
 
         qsubcmd += f" {bash_script}"
         qsubcmd += (" " + " ".join(script_parameters)) if (len(script_parameters) > 0) else ""
@@ -148,4 +150,4 @@ class SunGridEngine(object):
         assert len(err) == 0
         jid, jname = SunGridEngine.get_submission_info(out[0])
 
-        return jid, qsubcmd
+        return jid
