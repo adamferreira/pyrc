@@ -321,6 +321,9 @@ class FileSystem(object):
 	def basename(self, path:str)->str:
 		return str(type(self.__path)(path).name)
 
+	def ext(self, path:str)->str:
+		return str(type(self.__path)(path).suffix)
+
 	def isfile(self, path:str)->bool:
 		"""[summary]
 
@@ -419,20 +422,19 @@ class FileSystem(object):
 			else:
 				raise RuntimeError("Could not load subprocess module.")
 
-	def zip(self, path:str, archivename:str = None, flag:str = None):
-		if (not self.isdir(path)) or (not self.isfile(path)):
+	def zip(self, path:str, archivename:str = None, flag:str = ""):
+		if (not self.isdir(path)) and (not self.isfile(path)):
 			raise RuntimeError(f"Path {path} is not a file or directory.")
 
 		if self.is_remote():
+			archivename = (path.replace(self.ext(path), ".zip")) if archivename is None else (archivename + ".zip")
 			if self.is_unix():
-				return self.exec_command(f"zip {flag} \"{archivename}.zip\" \"{path}\"")
+				return self.exec_command(f"zip {flag} \"{archivename}\" \"{path}\"")
 			else:
 				return NotImplemented
 		else:
-			import zipfile
-			z = zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED)
-			z.write(self.join(self.dirname(path), f"{archivename}.zip"))
-			z.close()
+			import shutil
+			shutil.make_archive(archivename, 'zip', path)
 
 
 class RemotePython(object):

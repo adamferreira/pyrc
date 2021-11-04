@@ -134,7 +134,7 @@ def test_file_creation(filesystem):
     """
     path, workspace = filesystem.path, filesystem.workspace
     newfile = path.join(workspace, "newfile.txt")
-    newfile_size = 10 * 8 * (10**6)
+    newfile_size = 10 * 8 * (10**3)
 
     if not path.is_remote():
         assert not path.isfile(newfile)
@@ -159,6 +159,20 @@ def test_touch(filesystem):
     path.unlink(newfile)
     assert not path.isfile(newfile)
 
+@pytest.mark.depends(on=["test_touch"])
+def test_compression(filesystem):
+    path, workspace = filesystem.path, filesystem.workspace
+    if not path.is_remote():
+        return
+
+    newfile = path.join(workspace, "newfile.txt")
+    newarchive = path.join(workspace, "newfile.zip")
+    path.touch(newfile)
+    path.zip(newfile)
+    path.unlink(newfile)
+    assert path.isfile(newarchive)
+    path.unlink(newarchive)
+    
 
 @pytest.mark.depends(on=["test_touch"])
 def test_file_upload(filesystem):
