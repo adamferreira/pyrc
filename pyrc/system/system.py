@@ -426,8 +426,9 @@ class FileSystem(object):
 		if (not self.isdir(path)) and (not self.isfile(path)):
 			raise RuntimeError(f"Path {path} is not a file or directory.")
 
+		archivename = (path.replace(self.ext(path), ".zip")) if archivename is None else (archivename + ".zip")
+
 		if self.is_remote():
-			archivename = (path.replace(self.ext(path), ".zip")) if archivename is None else (archivename + ".zip")
 			if self.is_unix():
 				return self.exec_command(f"zip {flag} \"{archivename}\" \"{path}\"")
 			else:
