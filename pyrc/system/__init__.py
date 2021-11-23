@@ -1,2 +1,2 @@
-#from .system import *
+from .system import *
 #from .scriptgenerator import BashScriptGenerator
