@@ -9,7 +9,7 @@ import os
 
 # ------------------ SSHConnector
 class SSHConnector:
-	
+	"""
 	class SSHEnvironDict(dict[str:str]):
 		# if the connection is alredy open, we get all remote env vars
 		def __init__(self, remote):
@@ -33,6 +33,7 @@ class SSHConnector:
 			remoteenvs = self.remote.printenv()
 			for key,val in remoteenvs.items():
 				super().__setitem__(key, val)
+	"""
 	
 	""" 
 		MEMBERS
@@ -74,10 +75,11 @@ class SSHConnector:
 	@askpwd.setter
 	def askpwd(self, askpwd):
 		self._askpwd = askpwd
-
+	"""
 	@property
 	def environ(self) -> SSHEnvironDict:
 		return self._environ
+	"""
 
 	@property
 	def path(self) -> FileSystem:
@@ -107,7 +109,7 @@ class SSHConnector:
 		self._sshkey:str = sshkey
 		self._port:int = port
 		self._askpwd:bool = askpwd
-		self._environ:SSHConnector.SSHEnvironDict = None
+		self._environ = None
 		# Current working directory
 		self.__cwd:str = ""
 		# Previous current working directory
