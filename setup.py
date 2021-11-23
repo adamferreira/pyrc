@@ -18,8 +18,14 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    package_dir={"pyrc": "pyrc"},
-    packages = ["pyrc", "pyrc.remote", "pyrc.system", "pyrc.event", "pyrc.scheduler"],
+    package_dir={
+        "pyrc": "pyrc",
+        "pyrc.remote"    : "pyrc/remote",
+        "pyrc.system"    : "pyrc/system",
+        "pyrc.event"     : "pyrc/event",
+        "pyrc.scheduler" : "pyrc/scheduler"
+    },
+    packages = ["pyrc", "pyrc.remote", "pyrc.system", "pyrc.event", "pyrc.scheduler"], 
     test_suite="pyrc.tests",
     #packages=setuptools.find_packages(where="pyrc"),
     python_requires=">=3.0",
