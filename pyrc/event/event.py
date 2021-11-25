@@ -51,7 +51,6 @@ class CommandStorer(Event):
         self.__stderrflux = None
         self.__cmd:str = ""
         self.__cwd:str = ""
-        self.__status:int = None
 
     def begin(self, cmd, cwd, stdin, stdout, stderr):
         self.__cmd = cmd
@@ -66,10 +65,12 @@ class CommandStorer(Event):
 
         if stderrline != "":
             self.__stdout.append(stderrline)
+            
+    def status(self):
+        return self.__stdoutflux.channel.recv_exit_status()
 
     def end(self):
-        self.__status = self.__stdoutflux.channel.recv_exit_status()
-        return self.__stdout, self.__stderr, self.__status
+        return self.__stdout, self.__stderr, self.status()
 
 
 #for line in stdout:
@@ -181,7 +182,10 @@ class CommandPrettyPrintEvent(CommandStoreEvent):
     def progress(self, stdoutline:str, stderrline:str):
         if stdoutline != "":
             print(("\t" if self._print_input else "") + stdoutline)
-        if stderrline != "" and self._print_errors:
+            
+        # Sometime a log of-non erros logs (warnings for example) ends up in the error flux
+        # We only print them as error if the status of the sydout channel is not 0
+        if stderrline != "" and self._print_errors and self.status() != 0:
             print(bcolors.FAIL + ("\t" if self._print_input else "") + "[ERROR]", stderrline + bcolors.ENDC)
         CommandStoreEvent.progress(self, stdoutline, stderrline)
         
