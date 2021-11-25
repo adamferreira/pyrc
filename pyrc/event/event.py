@@ -180,17 +180,24 @@ class CommandPrettyPrintEvent(CommandStoreEvent):
         CommandStoreEvent.begin(self, cmd, cwd, stdin, stdout, stderr)
 
     def progress(self, stdoutline:str, stderrline:str):
+        CommandStoreEvent.progress(self, stdoutline, stderrline)
+        
         if stdoutline != "":
             print(("\t" if self._print_input else "") + stdoutline)
             
-        # Sometime a log of-non erros logs (warnings for example) ends up in the error flux
-        # We only print them as error if the status of the sydout channel is not 0
-        if stderrline != "" and self._print_errors and self.status() != 0:
+        if stderrline != "" and self._print_errors:
             print(bcolors.FAIL + ("\t" if self._print_input else "") + "[ERROR]", stderrline + bcolors.ENDC)
-        CommandStoreEvent.progress(self, stdoutline, stderrline)
+
         
     def end(self):
-        return CommandStoreEvent.end(self)
+        out, err, status = CommandStoreEvent.end(self)
+        # Sometime a log of-non erros logs (warnings for example) ends up in the error flux
+        # We only print them as error if the status of the sydout channel is not 0
+        #if status != 0:
+        #    print("status = ", status)
+        #    [print(bcolors.FAIL + ("\t" if self._print_input else "") + "[ERROR]", stderrline + bcolors.ENDC) for stderrline in err]
+            
+        return out, err, status
 
 
 class FileTransferEvent(Event):
