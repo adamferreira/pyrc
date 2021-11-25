@@ -186,17 +186,15 @@ class CommandPrettyPrintEvent(CommandStoreEvent):
             print(("\t" if self._print_input else "") + stdoutline)
             
         if stderrline != "" and self._print_errors:
-            print(bcolors.FAIL + ("\t" if self._print_input else "") + "[ERROR]", stderrline + bcolors.ENDC)
-
+            # Sometime a log of-non erros logs (warnings for example) ends up in the error flux
+            # We only print them as error if the status of the sydout channel is not 0
+            # Also we only evaluate the status here as stdout is printed in real-time
+            # But errors are printed when the command as terminated
+            if self.status() != 0:
+                print(bcolors.FAIL + ("\t" if self._print_input else "") + "[ERROR]", stderrline + bcolors.ENDC)
         
     def end(self):
         out, err, status = CommandStoreEvent.end(self)
-        # Sometime a log of-non erros logs (warnings for example) ends up in the error flux
-        # We only print them as error if the status of the sydout channel is not 0
-        #if status != 0:
-        #    print("status = ", status)
-        #    [print(bcolors.FAIL + ("\t" if self._print_input else "") + "[ERROR]", stderrline + bcolors.ENDC) for stderrline in err]
-            
         return out, err, status
 
 
