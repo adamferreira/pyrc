@@ -216,9 +216,9 @@ class FileSystem(object):
 				flag = " -p " if parents or exist_ok else ""
 				"""TODO make mode work on remote machine"""
 				#flag = " ".join([flag, "-m " + str(mode)])
-				out, err = self.exec_command(cmd = f"mkdir {flag} {path}", event = event)
+				out, err, status = self.exec_command(cmd = f"mkdir {flag} {path}", event = event)
 			else: # No need for -p flag in Windows
-				out, err = self.exec_command(cmd = f"mkdir {path}", event = event)
+				out, err, status = self.exec_command(cmd = f"mkdir {path}", event = event)
 
 			if len(err) > 0:
 				if "File exists" in "".join(err):
@@ -235,7 +235,7 @@ class FileSystem(object):
 		if self.is_remote():
 			if self.is_unix():
 				cmd_ = "rm -rf" if recur else "rmdir"
-				out, err = self.exec_command(
+				out, err, status = self.exec_command(
 					cmd = f"{cmd_} {path}",
 					event = pyevent.ErrorRaiseEvent()
 				)
@@ -272,7 +272,7 @@ class FileSystem(object):
 				raise FileNotFoundError(f"Remote file {path} does not exist.")
 
 			if self.is_unix():
-				out, err = self.exec_command(
+				out, err, status = self.exec_command(
 					cmd = f"rm -f {path}",
 					event = pyevent.ErrorRaiseEvent()
 				)
@@ -290,10 +290,10 @@ class FileSystem(object):
 		"""
 		if self.is_remote():
 			if self.is_unix():
-				out, err = self.exec_command(cmd = f"ls {path}", event=pyevent.ErrorRaiseEvent())
+				out, err, status = self.exec_command(cmd = f"ls {path}", event=pyevent.ErrorRaiseEvent())
 				return out
 			else:
-				out, err = self.exec_command(cmd = f"dir {path}", event=pyevent.ErrorRaiseEvent())
+				out, err, status = self.exec_command(cmd = f"dir {path}", event=pyevent.ErrorRaiseEvent())
 				return out
 		else:
 			root = FileSystemTree.get_root(path)
@@ -339,7 +339,7 @@ class FileSystem(object):
 		"""
 		if self.is_remote():
 			if self.is_unix():
-				out, err = self.exec_command(cmd = f"[[ -f {path} ]] && echo \"ok\"", event=pyevent.ErrorRaiseEvent())
+				out, err, status = self.exec_command(cmd = f"[[ -f {path} ]] && echo \"ok\"", event=pyevent.ErrorRaiseEvent())
 				if len(out) == 0: return False
 				else : return "ok" in out[0]
 			else:
@@ -363,7 +363,7 @@ class FileSystem(object):
 		"""
 		if self.is_remote():
 			if self.is_unix():
-				out, err = self.exec_command(cmd = f"[[ -s {path} ]] && echo \"ok\"", event=pyevent.ErrorRaiseEvent())
+				out, err, status = self.exec_command(cmd = f"[[ -s {path} ]] && echo \"ok\"", event=pyevent.ErrorRaiseEvent())
 				if len(out) == 0: return False
 				else : return "ok" in out[0]
 			else:
@@ -375,7 +375,7 @@ class FileSystem(object):
 	def islink(self, path:str)->bool:
 		if self.is_remote():
 			if self.is_unix():
-				out, err = self.exec_command(cmd = f"[[ -L {path} ]] && echo \"ok\"", event=pyevent.ErrorRaiseEvent())
+				out, err, status = self.exec_command(cmd = f"[[ -L {path} ]] && echo \"ok\"", event=pyevent.ErrorRaiseEvent())
 				if len(out) == 0: return False
 				else : return "ok" in out[0]
 			else:
@@ -462,7 +462,7 @@ class RemotePython(object):
 
 	def create_new_virtual_env(self, python_virtual_env_path:str):
 		self.venv = python_virtual_env_path
-		out, err = self.__remotefs.exec_command(
+		out, err, status = self.__remotefs.exec_command(
 			cmd = f"{self.python} -m venv {self.venv}", 
 			event = pyevent.ErrorRaiseEvent()
 		)
@@ -511,7 +511,7 @@ class RemotePython(object):
 		Returns:
 			str: [Python string version]
 		"""
-		out, err = self.exec_command(
+		out, err, status = self.exec_command(
 			pycmd = "import sys; print(sys.version_info[0]); print(sys.version_info[1]); print(sys.version_info[2])", 
 			event = pyevent.ErrorRaiseEvent())
 

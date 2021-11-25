@@ -46,12 +46,19 @@ class CommandStorer(Event):
         Event.__init__(self, caller)
         self.__stdout:'list[str]' = [] 
         self.__stderr:'list[str]' = []
+        self.__stdinflux = None
+        self.__stdoutflux = None
+        self.__stderrflux = None
         self.__cmd:str = ""
         self.__cwd:str = ""
+        self.__status:int = None
 
     def begin(self, cmd, cwd, stdin, stdout, stderr):
         self.__cmd = cmd
         self.__cwd = cwd
+        self.__stdinflux = stdin
+        self.__stdoutflux = stdout
+        self.__stderrflux = stderr
 
     def progress(self, stdoutline:str, stderrline:str):
         if stdoutline != "":
@@ -61,7 +68,8 @@ class CommandStorer(Event):
             self.__stdout.append(stderrline)
 
     def end(self):
-        return self.__stdout, self.__stderr
+        self.__status = self.__stdoutflux.channel.recv_exit_status()
+        return self.__stdout, self.__stderr, self.__status
 
 
 #for line in stdout:
@@ -95,7 +103,6 @@ class CommandScrapper(Event):
                 stdoutline = out.strip('\n'), 
                 stderrline = ""
                 )
-        
 
     def end(self):
         while True:
@@ -150,10 +157,10 @@ class ErrorRaiseEvent(CommandStoreEvent):
         CommandStoreEvent.__init__(self, caller)
 
     def end(self):
-        out, err = CommandStoreEvent.end(self)
+        out, err, status = CommandStoreEvent.end(self)
         if len(err) > 0:
             raise RuntimeError("\n".join(err))
-        return  out, err
+        return  out, err, status
 
 
 class CommandPrettyPrintEvent(CommandStoreEvent):
