@@ -414,7 +414,7 @@ class FileSystem(object):
 				raise RuntimeError("Could not load remote connection.")
 		else:
 			if _CMDEXEC_SUBPROCESS_ENABLED_:
-				event = pyevent.CommandPrettyPrintEvent(self, self.path) if event is None else event
+				event = pyevent.CommandPrettyPrintEvent(self) if event is None else event
 				p = Popen([f"cd {cwd};{cmd}"], stdin = PIPE, stdout = PIPE, stderr = PIPE, env = environment, shell = True)
 				event.begin(cmd, cwd, p.stdin, p.stdout, p.stderr)
 				#os.system(full_cmd) #TODO use os.system for realtime python stdout feed ?
