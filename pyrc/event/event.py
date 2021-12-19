@@ -67,7 +67,13 @@ class CommandStorer(Event):
             self.__stdout.append(stderrline)
             
     def status(self):
-        return self.__stdoutflux.channel.recv_exit_status()
+        # Only check status when using paramiko channels
+        # It is only used because paramiko tends to feed errors even for non 0 status
+        # This does not occurs with other librarys
+        if type(self.__stdoutflux) == 'ChannelFile':
+            return self.__stdoutflux.channel.recv_exit_status()
+        else: # defulat status is 'ok' status
+            return 0;
 
     def end(self):
         return self.__stdout, self.__stderr, self.status()
