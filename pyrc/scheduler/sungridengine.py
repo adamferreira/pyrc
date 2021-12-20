@@ -59,7 +59,7 @@ class SunGridEngine(object):
 
         assert path.is_unix()
         jobs = []
-        qstatlines, errors = path.exec_command(
+        qstatlines, errors, status = path.exec_command(
             cmd = SunGridEngine.fancyqstatcmd(flags, job_prefix),
             cwd = cwd,
             environment = environment,
