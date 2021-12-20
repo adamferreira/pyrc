@@ -484,7 +484,7 @@ class RemotePython(object):
 		Args:
 			cmd (str): [Command to execute]
 		"""
-		event = pyevent.CommandPrettyPrintEvent(self, self.path) if event is None else event
+		event = pyevent.CommandPrettyPrintEvent(self) if event is None else event
 		venv = self.__load_venv_cmd()
 		return self.__remotefs.exec_command(
 			cmd = f"{venv} {self.python} -c \'{pycmd}\'",
@@ -493,7 +493,7 @@ class RemotePython(object):
 		)
 
 	def exec_script(self, pyscript:str, environment:dict = None, event:pyevent.Event = None):
-		event = pyevent.CommandPrettyPrintEvent(self, self.path) if event is None else event
+		event = pyevent.CommandPrettyPrintEvent(self) if event is None else event
 		venv = self.__load_venv_cmd()
 
 		if not self.__remotefs.isfile(pyscript):
