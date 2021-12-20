@@ -141,7 +141,7 @@ class SunGridEngine(object):
         qsubcmd += f" {bash_script}"
         qsubcmd += (" " + " ".join(script_parameters)) if (len(script_parameters) > 0) else ""
 
-        out, err = path.exec_command(
+        out, err, _ = path.exec_command(
             cmd = qsubcmd,
             cwd = "" if working_directory is None else working_directory,
             environment = None, # Qsub doesnt need env to be launch as the script run in separate shell env,
