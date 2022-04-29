@@ -141,7 +141,7 @@ class FileSystem(object):
 		return self.__remote
 
 	def is_unix(self) -> bool:
-		return self.ostype == OSTYPE.LINUX or self.ostype == OSTYPE.MACOS
+		return self.__ostype == OSTYPE.LINUX or self.__ostype == OSTYPE.MACOS
 
 	def is_remote(self) -> bool:
 		return self.__remote is not None
