@@ -158,7 +158,29 @@ class FileSystem(object):
 		#if self.is_remote() and not remote.is_open():
 		#	raise RuntimeError("Remote connector must be open")
 		self.__remote = remote
-
+		
+	def system(self) -> str:
+		# OS deduction from platform.system() info
+		if self.is_remote():
+			return self.__remote.platform()["system"]
+		else:
+			return platform.system()
+		
+	def __deduce_ostype(self, system) -> OSTYPE:
+		# Load remote system informations 
+		# And should Pathlib path object accordingly 
+		if system == "Windows":
+			return OSTYPE.WINDOWS
+		elif "Linux" in system:
+			return OSTYPE.LINUX
+		elif system == "Darwin":
+			return OSTYPE.MACOS
+		else:
+			return OSTYPE.UNKNOW
+		
+	def get_local_ostype(self) -> OSTYPE:
+		return self.__deduce_ostype(platform.system())
+		
 
 	def __init__(self, remote:SSHConnector = None):
 		self.__remote:SSHConnector = None
@@ -167,23 +189,11 @@ class FileSystem(object):
 
 		self.set_connector(remote)
 
-		# OS deduction from platform.system() info
-		if self.is_remote():
-			system = self.__remote.platform()["system"]
+		__local_os = self.get_local_ostype()
+		if __local_os == OSTYPE.LINUX or __local_os == OSTYPE.MACOS:
+			self.__path = PosixPath()
 		else:
-			system = platform.system()
-			
-		
-		# Load remote system informations 
-		# And should Pathlib path object accordingly 
-		if system == "Windows":
-			self.ostype = OSTYPE.WINDOWS
-		elif "Linux" in system:
-			self.ostype = OSTYPE.LINUX
-		elif system == "Darwin":
-			self.ostype = OSTYPE.MACOS
-		else:
-			self.ostype = OSTYPE.UNKNOW
+			self.__path = WindowsPath()
 
 	def join(self, *other):
 		return str(self.__path.joinpath(*other))
