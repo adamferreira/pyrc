@@ -40,7 +40,7 @@ def create_default_connectors()  -> 'dict[str:SSHConnector]':
             ssh_config_file = os.path.join("/home", os.environ["USER"], ".ssh", "config")
 
     if platform.system() == "Windows":
-        ssh_config_file = os.path.join("C:", "Users", os.environ["USER"], ".ssh", "config")
+        ssh_config_file = os.path.join("C:\\", "Users", os.environ["USER"], ".ssh", "config")
 
     return create_connectors(ssh_config_file, sshkey=None)
 
