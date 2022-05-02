@@ -149,10 +149,6 @@ class FileSystem(object):
 	@ostype.setter
 	def ostype(self, type:OSTYPE):
 		self.__ostype = type
-		if not self.is_unix():
-			self.__path = WindowsPath()
-		else:
-			self.__path = PosixPath()
 
 	def set_connector(self, remote:SSHConnector):
 		#if self.is_remote() and not remote.is_open():
@@ -176,11 +172,7 @@ class FileSystem(object):
 		elif system == "Darwin":
 			return OSTYPE.MACOS
 		else:
-			return OSTYPE.UNKNOW
-		
-	def get_local_ostype(self) -> OSTYPE:
-		return self.__deduce_ostype(platform.system())
-		
+			return OSTYPE.UNKNOW	
 
 	def __init__(self, remote:SSHConnector = None):
 		self.__remote:SSHConnector = None
@@ -188,12 +180,15 @@ class FileSystem(object):
 		self.__ostype:OSTYPE = None
 
 		self.set_connector(remote)
+		self.ostype = self.__deduce_os(self.system())
 
-		__local_os = self.get_local_ostype()
-		if __local_os == OSTYPE.LINUX or __local_os == OSTYPE.MACOS:
-			self.__path = PosixPath()
+		if self.is_remote():
+			self.__path = None
 		else:
-			self.__path = WindowsPath()
+			if self.is_unix():
+				self.__path = PosixPath()
+			else:
+				self.__path = WindowsPath()
 
 	def join(self, *other):
 		return str(self.__path.joinpath(*other))
