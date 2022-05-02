@@ -1,7 +1,7 @@
 import os, platform
 import shutil
 from enum import Enum
-from pathlib import Path, PosixPath, WindowsPath
+from pathlib import Path, PosixPath, WindowsPath, PurePosixPath, PureWindowsPath
 import pyrc.event.event as pyevent
 
 try:
@@ -192,13 +192,10 @@ class FileSystem(object):
 				self.__path = WindowsPath()
 
 	def join(self, *other):
-		if self.is_remote():
-			if self.is_unix():
-				return "/".join(*other)
-			else:
-				raise RuntimeError("rmdir is only available on unix remote systems.")
+		if self.is_unix():
+			return str(PurePosixPath().joinpath(*other))
 		else:
-			return str(self.__path.joinpath(*other))
+			return str(PureWindowsPath().joinpath(*other))
 			
 	def mkdir(self, path:str, mode=0o777, parents=False, exist_ok=False):
 		"""[summary]
