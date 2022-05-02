@@ -162,9 +162,10 @@ class FileSystem(object):
 		else:
 			return platform.system()
 		
-	def __deduce_ostype(self, system) -> OSTYPE:
+	def __deduce_ostype(self) -> OSTYPE:
 		# Load remote system informations 
 		# And should Pathlib path object accordingly 
+		system = self.system()
 		if system == "Windows":
 			return OSTYPE.WINDOWS
 		elif "Linux" in system:
@@ -180,7 +181,7 @@ class FileSystem(object):
 		self.__ostype:OSTYPE = None
 
 		self.set_connector(remote)
-		self.ostype = self.__deduce_os(self.system())
+		self.ostype = self.__deduce_ostype()
 
 		if self.is_remote():
 			self.__path = None
