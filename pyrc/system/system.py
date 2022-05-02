@@ -192,7 +192,13 @@ class FileSystem(object):
 				self.__path = WindowsPath()
 
 	def join(self, *other):
-		return str(self.__path.joinpath(*other))
+		if self.is_remote():
+			if self.is_unix():
+				return "/".join(*other)
+			else:
+				raise RuntimeError("rmdir is only available on unix remote systems.")
+		else:
+			return str(self.__path.joinpath(*other))
 			
 	def mkdir(self, path:str, mode=0o777, parents=False, exist_ok=False):
 		"""[summary]
