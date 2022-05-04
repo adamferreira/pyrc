@@ -184,7 +184,10 @@ class FileSystem(object):
 		self.ostype = self.__deduce_ostype()
 
 		if self.is_remote():
-			self.__path = None
+			if self.is_unix():
+				self.__path = PurePosixPath()
+			else:
+				self.__path = PureWindowsPath()
 		else:
 			if self.is_unix():
 				self.__path = PosixPath()
