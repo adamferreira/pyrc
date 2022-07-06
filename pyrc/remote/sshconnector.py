@@ -2,10 +2,10 @@ import paramiko
 import getpass
 from scp import SCPClient, SCPException
 import pyrc.event.event as pyevent
-from pyrc.system.connector import Connector
+from pyrc.system.filesystem import FileSystem
 
-# ------------------ SSHConnector
-class SSHConnector(Connector):
+# ------------------ RemoteSSHFileSystem
+class RemoteSSHFileSystem(FileSystem):
 
 	@property
 	def hostname(self) -> str:
@@ -84,7 +84,7 @@ class SSHConnector(Connector):
 		# SCP connection
 		self._scp = SCPClient(self._sshcon.get_transport())
 		# Deduce os from new connection
-		Connector.__init__(self)
+		FileSystem.__init__(self)
 
 	def close(self) -> None:
 		"""
@@ -108,6 +108,10 @@ class SSHConnector(Connector):
 
 	def check_output(self, cmd:str,  environment:dict = None):
 			return self.exec_command(cmd = cmd, environment = environment, event = pyevent.ErrorRaiseEvent(self))[0]
+
+	# ------------------------
+	#		Overrides
+	# ------------------------
 
 	#@overrides
 	def exec_command(self, cmd:str, cwd:str = "", environment:dict = None, event:pyevent.Event = None):
@@ -138,4 +142,4 @@ class SSHConnector(Connector):
 		output = self.check_output("python -c \"import platform; print(platform.system()); print(platform.release())\"")
 		return { "system" : output[0], "release" : output[1] }
 
-# ------------------ SSHConnector
+# ------------------ RemoteSSHFileSystem
