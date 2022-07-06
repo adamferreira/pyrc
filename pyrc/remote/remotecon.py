@@ -154,7 +154,7 @@ class SSHConnector:
 		return self.exec_command(cmd=cmd, environment = environment, event = pyevent.ErrorRaiseEvent(self))[0]
 
 	def open(self, password:str = None, passphrase:str = None):
-		"""[summary]
+		"""
 			Opens the remote connection.
 		"""
 		proxy = paramiko.ProxyCommand(self.proxycommand) if self.use_proxy else None
@@ -183,7 +183,7 @@ class SSHConnector:
 		return self._sshcon.get_transport().is_active()
 
 	def close(self):
-		"""[summary]
+		"""
 			Close remote connection.
 		"""
 		if self._sshcon:
@@ -192,7 +192,7 @@ class SSHConnector:
 			self._scp.close()
 
 	def ls(self, folderpath):
-		"""[summary]
+		"""
 			List all remote files and folder found in remote path 'folderpath'.
 		Args:
 			folderpath (str): Remote path to explore.
@@ -219,7 +219,7 @@ class SSHConnector:
 		return self.remote_file_exists_in_folder(folderpath, filename)
 
 	def __upload_files(self, local_paths:'List[str]', remote_path:str):
-		"""[summary]
+		"""
 
 		Args:
 			local_paths (List[str]): Absolute file paths
@@ -232,7 +232,7 @@ class SSHConnector:
 		scp.close()
 	
 	def __upload_node(self, localnode:FileSystemTree, remote_path:str):
-		"""[summary]
+		"""
 
 		Args:
 			localnode (FileSystemTree): [description]
@@ -253,7 +253,7 @@ class SSHConnector:
 			
 
 	def upload(self, local_realpath:str, remote_path:str):
-		"""[summary]
+		"""
 
 		Args:
 			local_realpath (str): [description]
@@ -267,7 +267,7 @@ class SSHConnector:
 			self.__upload_files([local_realpath], remote_path)
 
 	def __download_files(self, remote_paths:'List[str]', local_path:str):
-		"""[summary]
+		"""
 
 		Args:
 			remote_paths (List[str]): Absolute remote paths
@@ -332,7 +332,7 @@ class SSHConnector:
 
 	
 	def platform(self) -> 'dict[str:str]':
-		"""[summary]
+		"""
 		Uses python packages 'platform' on remote host to retrieve system informations
 		The information exactly what 'platform.system()' and 'platform.release()' returns
 		Raises:

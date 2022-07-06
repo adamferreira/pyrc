@@ -201,7 +201,7 @@ class FileSystem(object):
 			return str(PureWindowsPath().joinpath(*other))
 			
 	def mkdir(self, path:str, mode=0o777, parents=False, exist_ok=False):
-		"""[summary]
+		"""
 		Create a new directory at this given path. If mode is given, it is combined with the process’ umask value to determine the file mode and access flags. 
 		If the path already exists, FileExistsError is raised.
 		If parents is true, any missing parents of this path are created as needed; 
@@ -270,7 +270,7 @@ class FileSystem(object):
 				newpath.rmdir()
 
 	def unlink(self, path:str, missing_ok:bool=False):
-		"""[summary]
+		"""
 		Similar to os.unlink().
 		Remove this file or symbolic link. If the path points to a directory, use rmdir() instead.
 		If missing_ok is false (the default), FileNotFoundError is raised if the path does not exist.
@@ -295,7 +295,7 @@ class FileSystem(object):
 			
 
 	def ls(self, path:str)-> 'List[str]':
-		"""[summary]
+		"""
 		Return files and directories in path (no recursion) as a string list
 		Returns:
 			[type]: [description]
@@ -312,7 +312,7 @@ class FileSystem(object):
 			return root.files + list(root.dirs.keys())
 
 	def lsdir(self, path:str)-> 'FileSystemTree':
-		"""[summary]
+		"""
 			Return files and directories in path (recursilvy) as a FileSystemTree
 		Returns:
 			[type]: [description]
@@ -337,7 +337,7 @@ class FileSystem(object):
 		return str(type(self.__path)(path).suffix)
 
 	def isfile(self, path:str)->bool:
-		"""[summary]
+		"""
 
 		Args:
 			path (str): [description]
@@ -362,7 +362,7 @@ class FileSystem(object):
 			return type(self.__path)(path).is_file()
 
 	def isdir(self, path:str)->bool:
-		"""[summary]
+		"""
 
 		Args:
 			path (str): [description]
@@ -397,7 +397,7 @@ class FileSystem(object):
 			return type(self.__path)(path).is_symlink()
 
 	def touch(self, path:str):
-		"""[summary]
+		"""
 		Create the file empty <path>
 		Args:
 			path (str): [description]
@@ -490,7 +490,7 @@ class RemotePython(object):
 			self.create_new_virtual_env(python_virtual_env_path)
 
 	def exec_command(self, pycmd:str, environment:dict = None, event:pyevent.Event = None):
-		"""[summary]
+		"""
 		Execute the given command.
 		Use the cached virtual env is it exists.
 		Args:
@@ -518,7 +518,7 @@ class RemotePython(object):
 		)
 
 	def version(self)->str:
-		"""[summary]
+		"""
 		Get the remote python installation version
 		Returns:
 			str: [Python string version]

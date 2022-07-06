@@ -125,7 +125,7 @@ def test_mkpath(filesystem):
 
 @pytest.mark.depends(on=["test_mkpath"])
 def test_file_creation(filesystem):
-    """[summary]
+    """
     Create (only on local machine) a non-zero file 
     Tests it creation and size, then delete it
     Also test deletion
@@ -176,7 +176,7 @@ def test_compression(filesystem):
 
 @pytest.mark.depends(on=["test_touch"])
 def test_file_upload(filesystem):
-    """[summary]
+    """
 
     Args:
         filesystem ([type]): [description]

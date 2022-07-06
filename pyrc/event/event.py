@@ -30,7 +30,7 @@ class Event(object):
         return None
 
 class CommandStorer(Event):
-    """[summary]
+    """
     Base Event used to store captured stdout and stderr of a launched command.
     end() returns all stdout and stderr lines captured.
     """

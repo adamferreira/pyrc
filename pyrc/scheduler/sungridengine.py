@@ -13,7 +13,7 @@ class SunGridEngine(object):
 
     # tips for selecting specific sge id : qstat | grep "^[[:space:]]*$ID[[:space:]]"
     def fancyqstatcmd(flags: 'list[str]' = [], job_prefix: str = None) -> 'str':
-        """[summary]
+        """
             This perferms a formated qstats command on the remote machine.
             The format is the following : 
             qstat -xml | tr '\n' ' ' | sed 's#<job_list[^>]*>#\n#g'| sed 's#<[^>]*>##g' | grep " " | column -t
@@ -42,7 +42,7 @@ class SunGridEngine(object):
         return qstat_cmd
 
     def qstat(path:pysys.FileSystem, flags: 'list[str]' = [], job_prefix: str = None, cwd:str = "", environment:dict = None) -> 'list[dict[str:str]]':
-        """[summary]
+        """
             This perferms a formated qstats command on the remote machine.
             The format is the following : 
             qstat -xml | tr '\n' ' ' | sed 's#<job_list[^>]*>#\n#g'| sed 's#<[^>]*>##g' | grep " " | column -t
