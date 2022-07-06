@@ -142,4 +142,17 @@ class RemoteSSHFileSystem(FileSystem):
 		output = self.check_output("python -c \"import platform; print(platform.system()); print(platform.release())\"")
 		return { "system" : output[0], "release" : output[1] }
 
+	#@overrides
+	def unlink(self, path:str, missing_ok:bool=False) -> None:
+		if not missing_ok and not (self.isfile(path) or self.islink(path)):
+			raise FileNotFoundError(f"Remote file {path} does not exist.")
+
+		if self.is_unix():
+			out, err, status = self.exec_command(
+				cmd = f"rm -f {path}",
+				event = pyevent.ErrorRaiseEvent()
+			)
+		else:
+			raise RuntimeError("\'unlink\' is only available on unix remote systems.")
+
 # ------------------ RemoteSSHFileSystem

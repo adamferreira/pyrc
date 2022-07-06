@@ -103,4 +103,15 @@ class FileSystem:
 		"""
 		return self.platform()["system"]
 
+	def unlink(self, path:str, missing_ok:bool=False) -> None:
+		"""
+		Similar to os.unlink().
+		Remove this file or symbolic link. If the path points to a directory, use rmdir() instead.
+		If missing_ok is false (the default), FileNotFoundError is raised if the path does not exist.
+		If missing_ok is true, FileNotFoundError exceptions will be ignored (same behavior as the POSIX rm -f command).
+		Args:
+			path (str): path to remove
+			missing_ok (bool, optional): Defaults to False.
+		"""
+
 # ------------------ FileSystem
