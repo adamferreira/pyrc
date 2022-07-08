@@ -81,8 +81,8 @@ class FileSystemCommand(FileSystem):
 
 	#@overrides
 	def lsdir(self, path:str):
-		# TODO
-		raise RuntimeError("lsdir not yet supported for remote paths.")
+		# Do nothing
+		return None
 
 	#@overrides
 	def isfile(self, path:str) -> bool:

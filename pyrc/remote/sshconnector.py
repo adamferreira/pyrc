@@ -3,6 +3,7 @@ import getpass
 from scp import SCPClient, SCPException
 import pyrc.event.event as pyevent
 from pyrc.system.command import FileSystemCommand
+from pyrc.system.filesystemtree import FileSystemTree
 
 # ------------------ RemoteSSHFileSystem
 class RemoteSSHFileSystem(FileSystemCommand):
@@ -145,6 +146,10 @@ class RemoteSSHFileSystem(FileSystemCommand):
 		"""
 		output = self.check_output("python -c \"import platform; print(platform.system()); print(platform.release())\"")
 		return { "system" : output[0], "release" : output[1] }
+
+	#@overrides
+	def lsdir(self, path:str):
+		return FileSystemTree.get_tree(self, path)
 
 
 	# --------------------------------------------------

@@ -55,4 +55,4 @@ def test_fs(
 if __name__ == '__main__':
     #test_fs(pysys.LocalFileSystem(), currentdir())
     print(pysys.FileSystemTree.get_root(pysys.LocalFileSystem(), pysys.LocalFileSystem().dirname(currentdir())))
-    print(pysys.FileSystemTree.get_tree(pysys.LocalFileSystem(), pysys.LocalFileSystem().dirname(currentdir())))
+    print(pysys.LocalFileSystem().lsdir(pysys.LocalFileSystem().dirname(currentdir())))
