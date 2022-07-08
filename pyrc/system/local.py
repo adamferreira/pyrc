@@ -52,10 +52,42 @@ class LocalFileSystem(FileSystem):
 		return platform.system()
 
 	#@overrides
+	def mkdir(self, path:str, mode=0o777, parents=False, exist_ok=False):
+		newpath = type(self.__path)(path)
+		newpath.mkdir(mode=mode, parents=parents, exist_ok=exist_ok)
+
+	#@overrides
+	def rmdir(self, path:str, recur:bool = False):
+		def rm_tree(pth):
+			pth = Path(pth)
+			for child in pth.glob('*'):
+				if child.is_file():
+					child.unlink()
+				else:
+					rm_tree(child)
+			pth.rmdir()
+				
+		newpath = type(self.__path)(path)
+		if recur:
+			rm_tree(newpath)
+		else:
+			newpath.rmdir()
+
+	#@overrides
 	def unlink(self, path:str, missing_ok:bool=False) -> None:
 		type(self.__path)(path).unlink(missing_ok)
 
+	#@overrides
+	def ls(self, path:str)-> 'List[str]':
+		root = FileSystemTree.get_root(path)
+		return root.files + list(root.dirs.keys())
 	
+	#@overrides
+	def lsdir(self, path:str):
+		return FileSystemTree.get_tree(path)
 
+	#@overrides
+	def isfile(self, path:str) -> bool:
+		return type(self.__path)(path).is_file()
 
 # ------------------ LocalFileSystem

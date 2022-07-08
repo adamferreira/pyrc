@@ -298,7 +298,7 @@ class FileSystem(object):
 		"""
 		Return files and directories in path (no recursion) as a string list
 		Returns:
-			[type]: [description]
+			List[str]: list of files and folders at the root of path
 		"""
 		if self.is_remote():
 			if self.is_unix():

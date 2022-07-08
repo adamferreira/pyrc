@@ -32,6 +32,11 @@ class FileSystem:
 
 	def __init__(self) -> None:
 		self.__ostype:OSTYPE = self.__deduce_ostype()
+		# Path deduction from os type
+		if self.is_unix():
+			self.__path = PurePosixPath()
+		else:
+			self.__path = PureWindowsPath()
 
 	# ------------------------
 	#		Custom functions
@@ -42,6 +47,19 @@ class FileSystem:
 			return str(PurePosixPath().joinpath(*other))
 		else:
 			return str(PureWindowsPath().joinpath(*other))
+
+	def file_exists_in_folder(self, folderpath:str, filename:str) -> bool:
+		files = self.ls(folderpath)
+		return filename in files
+
+	def dirname(self, path:str) -> str:
+		return str(type(self.__path)(path).parent)
+
+	def basename(self, path:str) -> str:
+		return str(type(self.__path)(path).name)
+
+	def ext(self, path:str) -> str:
+		return str(type(self.__path)(path).suffix)
 
 	# ------------------------
 	#		To Override
@@ -103,6 +121,34 @@ class FileSystem:
 		"""
 		return self.platform()["system"]
 
+	def mkdir(self, path:str, mode=0o777, parents=False, exist_ok=False):
+		"""
+		Create a new directory at this given path. If mode is given, it is combined with the process’ umask value to determine the file mode and access flags. 
+		If the path already exists, FileExistsError is raised.
+		If parents is true, any missing parents of this path are created as needed; 
+		they are created with the default permissions without taking mode into account (mimicking the POSIX mkdir -p command).
+		If parents is false (the default), a missing parent raises FileNotFoundError.
+		If exist_ok is false (the default), FileExistsError is raised if the target directory already exists.
+		If exist_ok is true, FileExistsError exceptions will be ignored (same behavior as the POSIX mkdir -p command), 
+		but only if the last path component is not an existing non-directory file.
+		Args:
+			path (str): [description]
+			mode ([type], optional): [description]. Defaults to 0o777.
+			parents (bool, optional): [description]. Defaults to False.
+			exist_ok (bool, optional): [description]. Defaults to False.
+
+		Raises:
+			FileExistsError: [description]
+			RuntimeError: [description]
+			OSError: [description]
+		"""
+		return NotImplemented
+
+	def rmdir(self, path:str, recur:bool = False):
+		# TODO doc
+		# Keep rmdir and rm_tree in a single method ?
+		return NotImplemented
+
 	def unlink(self, path:str, missing_ok:bool=False) -> None:
 		"""
 		Similar to os.unlink().
@@ -112,6 +158,36 @@ class FileSystem:
 		Args:
 			path (str): path to remove
 			missing_ok (bool, optional): Defaults to False.
+		"""
+		return NotImplemented
+
+	def ls(self, path:str) -> 'List[str]':
+		"""
+		Return files and directories in path (no recursion) as a string list
+		Returns:
+			List[str]: list of files and folders at the root of path
+		"""
+		return NotImplemented
+
+	def lsdir(self, path:str) -> 'FileSystemTree':
+		"""
+			Return files and directories in path (recursilvy) as a FileSystemTree
+		Returns:
+			FileSystemTree: Tree reprensenting the path directory structure
+		"""
+		return NotImplemented
+
+	def isfile(self, path:str) -> bool:
+		"""
+		Args:
+			path (str): path to check
+
+		Raises:
+			RuntimeError:
+
+		Returns:
+			Return True if the path points to a regular file (or a symbolic link pointing to a regular file), False if it points to another kind of file.
+			False is also returned if the path doesn’t exist or is a broken symlink; other errors (such as permission errors) are propagated.
 		"""
 		return NotImplemented
 
