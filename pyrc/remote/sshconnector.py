@@ -7,7 +7,7 @@ from pyrc.system.command import FileSystemCommand
 # ------------------ RemoteSSHFileSystem
 class RemoteSSHFileSystem(FileSystemCommand):
 	"""
-	RemoteSSHFileSystem is will submit evey generated command (FileSystemCommand)
+	RemoteSSHFileSystem will submit evey generated command (FileSystemCommand)
 	to a remote machine throuth a SSH connection
 	"""
 
@@ -111,7 +111,7 @@ class RemoteSSHFileSystem(FileSystemCommand):
 		return stdin, stdout, stderr
 
 	def check_output(self, cmd:str,  environment:dict = None):
-			return self.exec_command(cmd = cmd, environment = environment, event = pyevent.ErrorRaiseEvent(self))[0]
+		return self.exec_command(cmd = cmd, environment = environment, event = pyevent.ErrorRaiseEvent(self))[0]
 
 	# ------------------------
 	#		Overrides
@@ -145,5 +145,119 @@ class RemoteSSHFileSystem(FileSystemCommand):
 		"""
 		output = self.check_output("python -c \"import platform; print(platform.system()); print(platform.release())\"")
 		return { "system" : output[0], "release" : output[1] }
+
+
+	# --------------------------------------------------
+	def __upload_files(self, local_paths:'List[str]', remote_path:str):
+		"""
+
+		Args:
+			local_paths (List[str]): Absolute file paths
+			remote_path (str): Absolute remote path
+		"""
+		self.filesupload_event.begin(local_paths)
+		scp = SCPClient(self._sshcon.get_transport(), progress = self.filesupload_event.progress)
+		scp.put(local_paths, recursive=False, remote_path = remote_path)
+		self.filesupload_event.end()
+		scp.close()
+	
+	def __upload_node(self, localnode:FileSystemTree, remote_path:str):
+		"""
+
+		Args:
+			localnode (FileSystemTree): [description]
+			remote_path (str): [description]
+		"""
+
+		if self.remote_file_exists(remote_path):
+			self.rm(remote_path)
+		self.path.mkdir(remote_path, exist_ok=True)
+
+		self.dirupload_event.begin(localnode.realpath(), remote_path)
+		self.__upload_files(local_paths=localnode.realfiles(), remote_path=remote_path)
+		self.dirupload_event.end()
+
+	def __upload_tree(self, localtree:FileSystemTree, remote_path:str):
+		for n in localtree.nodes():
+			self.__upload_node(localnode = n, remote_path = self.path.join(remote_path, n.relpath()))
+			
+
+	def upload(self, local_realpath:str, remote_path:str):
+		"""
+
+		Args:
+			local_realpath (str): [description]
+			remote_path (str): [description]
+		"""
+		local_realpath = os.path.realpath(local_realpath)
+		if os.path.isdir(local_realpath):
+			self.__upload_tree(FileSystemTree.get_tree(local_realpath), remote_path)
+
+		if os.path.isfile(local_realpath):
+			self.__upload_files([local_realpath], remote_path)
+
+	def __download_files(self, remote_paths:'List[str]', local_path:str):
+		"""
+
+		Args:
+			remote_paths (List[str]): Absolute remote paths
+			local_path (str): Absolute local path
+		"""
+		self.__filesdownload_event.begin(remote_paths)
+		scp = SCPClient(self._sshcon.get_transport(), progress = self.__filesdownload_event.progress)
+		scp.get(local_path = local_path, recursive=False, remote_path = remote_paths)
+		self.__filesdownload_event.end()
+		scp.close()
+
+	def download(self, remote_file_path, local_file_path = "."):
+		"""Recursivly download files/folder from remote host.
+
+		Args:
+			file ([remote_file_path]): Remote file path.
+		"""
+		print("Downloading", remote_file_path, "...")
+		try:
+			self._scp.get(remote_path = remote_file_path, local_path = local_file_path, recursive=True)
+		except SCPException as error:
+			print(error)
+			raise error
+		finally:
+			print("Downloaded", remote_file_path, "to", local_file_path)
+
+	def zip(self, remote_path, remote_archive, flag = ""):
+		stdin, stdout, stderr = self.__exec_command("zip " + flag + " \"" + remote_archive + "\" \"" + remote_path + "\"", print_output = True)
+
+	def unzip(self, remote_archive, remote_path, flag = ""):
+		stdin, stdout, stderr = self.__exec_command("unzip " + flag + " \"" + remote_archive + "\" -d \"" + remote_path + "\"", print_output = True)
+
+	def compress_folder(self, remote_folder_path, sep = "/"):
+		return NotImplemented
+		if self.remote_file_exists(remote_folder_path):
+			tmpwd = self._cwd
+			self.cd(remote_folder_path)
+			splitt = remote_folder_path.split(sep)
+			remote_archive = splitt[len(splitt)-1] + ".zip"
+			self.zip(".", remote_archive, flag = "-r")
+			self.cd(tmpwd)
+			return remote_folder_path + sep + remote_archive
+		else:
+			raise RuntimeError("Remote folder " + remote_folder_path + " not found.")
+
+	def download_folder(self, remote_folder_path, local_path, compress = False, clean_remote = False):
+		if os.path.isdir(local_path):
+			raise RuntimeError("Local path already exists !")
+
+		if self.remote_file_exists(remote_folder_path):
+			if compress:
+				remote_archive_path = self.compress_folder(remote_folder_path)
+				self.download(remote_archive_path, local_path + ".zip")
+				self.rm(remote_archive_path, "-r")
+			else:
+				self.download(remote_folder_path, local_path)
+
+			if clean_remote:
+				self.rm(remote_folder_path, "-r")
+		else:
+			raise RuntimeError("Remote folder " + remote_folder_path + " cannot be found on " + self._hostname + ".")
 
 # ------------------ RemoteSSHFileSystem

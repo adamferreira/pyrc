@@ -1,12 +1,11 @@
 import os, paramiko, platform
-from pyrc.remote import SSHConnector
+from pyrc.remote import RemoteSSHFileSystem
 
 def get_ssh_configurations(user_config_file:str) -> 'dict[str:dict[str:str]]':
     ssh_config = paramiko.SSHConfig.from_path(user_config_file)
     return {hostname : ssh_config.lookup(hostname) for hostname in ssh_config.get_hostnames()}
 
-
-def create_connectors(user_config_file:str, sshkey:str=None) -> 'dict[str:SSHConnector]':
+def create_connectors(user_config_file:str, sshkey:str=None) -> 'dict[str:RemoteSSHFileSystem]':
     # Exception if file does not exist
     ssh_configs = get_ssh_configurations(user_config_file)
 
@@ -21,17 +20,17 @@ def create_connectors(user_config_file:str, sshkey:str=None) -> 'dict[str:SSHCon
         
         # Creating user config dictionnary
         user_config = ssh_configs[hostname]
-        connectors[hostname] = SSHConnector(
-            user=user_config["user"],
-            hostname=user_config["hostname"],
-            sshkey=sshkey,
+        connectors[hostname] = RemoteSSHFileSystem(
+            user = user_config["user"],
+            hostname = user_config["hostname"],
+            sshkey = sshkey,
             port = user_config["port"] if "port" in user_config else 22,
-            proxycommand=user_config["proxycommand"] if "proxycommand" in user_config else None,
+            proxycommand = user_config["proxycommand"] if "proxycommand" in user_config else None,
             askpwd = False
         )
     return connectors
 
-def create_default_connectors()  -> 'dict[str:SSHConnector]':
+def create_default_connectors()  -> 'dict[str:RemoteSSHFileSystem]':
     ssh_config_file = ""
     if platform.system() == "Linux":
         if "WSL2" in platform.release():
@@ -45,9 +44,6 @@ def create_default_connectors()  -> 'dict[str:SSHConnector]':
     return create_connectors(ssh_config_file, sshkey=None)
 
 class RemotePyrc(object):
-	def __init__(self, remote:SSHConnector, python_remote_install:str = None):
+	def __init__(self, remote:RemoteSSHFileSystem, python_remote_install:str = None):
 		assert remote.is_opent()
 		self.__githuburl = "https://github.com/adamferreira/pyrc.git"
-
-    #def get_python_version(self):
-    #    return major, minor, patch

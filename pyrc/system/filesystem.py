@@ -191,6 +191,34 @@ class FileSystem:
 		"""
 		return NotImplemented
 
+	def isdir(self, path:str) -> bool:
+		"""
+		Args:
+			path (str): path to check
+
+		Raises:
+			RuntimeError
+
+		Returns:
+		True if the path points to a directory (or a symbolic link pointing to a directory), 
+		False if it points to another kind of file.
+		False is also returned if the path doesn’t exist or is a broken symlink; 
+		other errors (such as permission errors) are propagated.
+		"""
+		return NotImplemented
+
+	def islink(self, path:str) -> bool:
+		"""
+		Args:
+			path (str): path to check
+
+		Returns:
+		True if the path points to a symbolic link, False otherwise.
+		False is also returned if the path doesn’t exist; other errors 
+		(such as permission errors) are propagated.
+		"""
+		return NotImplemented
+
 	def touch(self, path:str) -> None:
 		"""
 		Create the file empty <path>
@@ -200,6 +228,25 @@ class FileSystem:
 		Raises:
 			RuntimeError: if parent(path) is not a valid directory
 		"""
+		return NotImplemented
+
+	def zip(self, path:str, archivename:str = None, flag:str = "") -> None:
+		if (not self.isdir(path)) and (not self.isfile(path)):
+			raise RuntimeError(f"Path {path} is not a file or directory.")
+
+		archivename = (path.replace(self.ext(path), ".zip")) if archivename is None else (archivename + ".zip")
+
+	def get_size(path) -> int:
+		"""
+		Args:
+			path (str): path to analyse
+
+		Returns:
+			int: size (in bytes) of the path (file or folder)
+		"""
+		return NotImplemented
+
+	def env(self, var:str) -> str:
 		return NotImplemented
 		
 

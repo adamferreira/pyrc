@@ -80,4 +80,47 @@ class FileSystemCommand(FileSystem):
 			# TODO
 			raise RuntimeError("isfile not supported for Windows remote systems")
 
+	#@overrides
+	def isdir(self, path:str) -> bool:
+		if self.is_unix():
+			out, err, status = self.exec_command(cmd = f"[[ -s {path} ]] && echo \"ok\"", event=pyevent.ErrorRaiseEvent())
+			if len(out) == 0: return False
+			else : return "ok" in out[0]
+		else:
+			# TODO
+			raise RuntimeError("isdir not supported for Windows remote systems")
+
+	#@overrides
+	def islink(self, path:str) -> bool:
+		if self.is_unix():
+			out, err, status = self.exec_command(cmd = f"[[ -L {path} ]] && echo \"ok\"", event=pyevent.ErrorRaiseEvent())
+			if len(out) == 0: return False
+			else : return "ok" in out[0]
+		else:
+			# TODO
+			raise RuntimeError("islink not supported for Windows remote systems")
+
+	#@overrides
+	def touch(self, path:str):
+		parent = self.dirname(path)
+		if not self.isdir(parent):
+			raise RuntimeError(f"Path {parent} is not a valid directory.")
+
+		if self.is_unix():
+			self.exec_command(f"touch {path}")
+		else:
+			self.exec_command(f"call > {path}")
+
+	#@overrides
+	def zip(self, path:str, archivename:str = None, flag:str = "") -> None:
+		FileSystem.zip(self, path, archivename)
+		if self.is_unix():
+			return self.exec_command(f"zip {flag} \"{archivename}\" \"{path}\"")
+		else:
+			return NotImplemented
+
+	#@overrides
+	def env(self, var:str) -> str:
+		return self.check_output(f"python -c \"import os; print(os.environ[\'{var}\'])\"")[0]
+
 # ------------------ FileSystemCommad

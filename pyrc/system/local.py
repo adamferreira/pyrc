@@ -90,4 +90,42 @@ class LocalFileSystem(FileSystem):
 	def isfile(self, path:str) -> bool:
 		return type(self.__path)(path).is_file()
 
+	#@overrides
+	def isdir(self, path:str) -> bool:
+		return type(self.__path)(path).is_dir()
+
+	#@overrides
+	def islink(self, path:str) -> bool:
+		return type(self.__path)(path).is_symlink()
+
+	#@overrides
+	def touch(self, path:str):
+		parent = self.dirname(path)
+		if not self.isdir(parent):
+			raise RuntimeError(f"Path {parent} is not a valid directory.")
+		f = open(path,"w")
+		f.close()
+
+	#@overrides
+	def zip(self, path:str, archivename:str = None, flag:str = "") -> None:
+		import shutil
+		FileSystem.zip(self, path, archivename)
+		shutil.make_archive(archivename, 'zip', path)
+
+	#@overrides
+	def get_size(path) -> int:
+		total_size = 0
+		for dirpath, dirnames, filenames in os.walk(path):
+			for f in filenames:
+				fp = os.path.join(dirpath, f)
+				# skip if it is symbolic link
+				if not os.path.islink(fp):
+					total_size += os.path.getsize(fp)
+					
+		return total_size
+
+	#@overrides
+	def env(self, var:str) -> str:
+		return os.environ[var]
+
 # ------------------ LocalFileSystem
