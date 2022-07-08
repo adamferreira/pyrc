@@ -1,3 +1,5 @@
+from ast import Subscript
+from textwrap import indent
 from pyrc.system.filesystem import FileSystem
 
 class FileSystemTree(object):pass
@@ -29,14 +31,19 @@ class FileSystemTree(object):
 
 	def __str__(self):
 		level = self.level
-		indent = ' ' * 4 * (level)
-		string = "".join(['{}{}/'.format(indent, self.root), '\n'])
-		subindent = ' ' * 4 * (level + 1)
+		#indent, subindent = ' ' * 4 * (level), ' ' * 4 * (level + 1)
+		indent, subindent = '\t' * (level), '\t' * (level + 1)
+		string = "".join(['{}{}/'.format(indent, self.root),'\n'])
 		for f in self.files:
 			string = "".join([string, '{}{}'.format(subindent, f), '\n'])
 
 		for d in self.dirs.values():
-			string = "".join([string, str(d), '\n'])
+			# if d is a path not a FileSystemTree (when using getroot for instance)
+			if isinstance(d, str):
+				string = "".join([string, '{}{}'.format(subindent, d), '\n'])
+			# Do not indend if its a tree
+			if isinstance(d, FileSystemTree):
+				string = "".join([string, str(d), '\n'])
 
 		return string
 
@@ -95,7 +102,7 @@ class FileSystemTree(object):
 		root, dirs, files = path.walk0(tree_root.realpath())
 		tree_root.files = files.copy()
 		for dir in dirs :
-			tree_root.dirs[dir] = FileSystemTree.get_tree(path, path.join(root, dir), tree_root) 
+			tree_root.dirs[dir] = FileSystemTree.get_tree(path, path.join(root, dir), parent = tree_root) 
 		return tree_root
 
 	@staticmethod
