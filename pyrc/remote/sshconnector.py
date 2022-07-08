@@ -38,10 +38,10 @@ class RemoteSSHFileSystem(FileSystemCommand):
 	@property
 	def askpwd(self) -> bool:
 		return self._askpwd
+
 	@askpwd.setter
 	def askpwd(self, askpwd):
 		self._askpwd = askpwd
-
 
 	def __init__(self, user:str, hostname:str, sshkey:str, port:int = None, proxycommand:str = None, askpwd:bool = False) -> None:
 		self._user:str = user

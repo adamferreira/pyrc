@@ -21,6 +21,7 @@ class FileSystem:
 
 	def __deduce_ostype(self) -> OSTYPE:
 		system = self.system()
+
 		if system == "Windows":
 			return OSTYPE.WINDOWS
 		elif "Linux" in system:
@@ -57,6 +58,9 @@ class FileSystem:
 
 	def basename(self, path:str) -> str:
 		return str(type(self.__path)(path).name)
+
+	def abspath(self, path:str) -> str:
+		return str(type(self.__path)(path).resolve(strict = True))
 
 	def ext(self, path:str) -> str:
 		return str(type(self.__path)(path).suffix)
