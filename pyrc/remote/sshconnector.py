@@ -148,6 +148,20 @@ class RemoteSSHFileSystem(FileSystemCommand):
 		return { "system" : output[0], "release" : output[1] }
 
 	#@overrides
+	def walk0(self, path:str) -> tuple:
+		root = self.abspath(path)
+		files = []
+		dirs = []
+		files_and_dirs = self.ls(root)
+		for fad in files_and_dirs:
+			if self.isfile(fad):
+				files.append(fad)
+			if self.isdir(fad):
+				dirs.append(fad)
+
+		return root, dirs, files
+
+	#@overrides
 	def lsdir(self, path:str):
 		return FileSystemTree.get_tree(self, path)
 

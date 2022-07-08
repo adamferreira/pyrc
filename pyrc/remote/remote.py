@@ -1,4 +1,5 @@
-import os, paramiko, platform
+import paramiko
+from pyrc.system import LocalFileSystem
 from pyrc.remote import RemoteSSHFileSystem
 
 def get_ssh_configurations(user_config_file:str) -> 'dict[str:dict[str:str]]':
@@ -31,15 +32,15 @@ def create_connectors(user_config_file:str, sshkey:str=None) -> 'dict[str:Remote
     return connectors
 
 def create_default_connectors()  -> 'dict[str:RemoteSSHFileSystem]':
-    ssh_config_file = ""
-    if platform.system() == "Linux":
+    path = LocalFileSystem()
+    platform = path.platform()
+    if path.is_unix():
         if "WSL2" in platform.release():
-            ssh_config_file = os.path.join("/mnt" , "c", "Users", os.environ["USER"], ".ssh", "config")
+            ssh_config_file = path.join("/mnt" , "c", "Users", path.env("USER"), ".ssh", "config")
         else:
-            ssh_config_file = os.path.join("/home", os.environ["USER"], ".ssh", "config")
-
-    if platform.system() == "Windows":
-        ssh_config_file = os.path.join("C:\\", "Users", os.environ["USER"], ".ssh", "config")
+            ssh_config_file = path.join("/home", path.env("USER"), ".ssh", "config")
+    else:
+        ssh_config_file = path.join("C:\\", "Users", path.env("USER"), ".ssh", "config")
 
     return create_connectors(ssh_config_file, sshkey=None)
 

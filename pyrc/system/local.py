@@ -59,7 +59,7 @@ class LocalFileSystem(FileSystem):
 	def platform(self) -> 'dict[str:str]':
 		return {
 			"system" : self.system(),
-			"release" : "unknown"
+			"release" : platform.release()
 		}
 
 	#@overrides
