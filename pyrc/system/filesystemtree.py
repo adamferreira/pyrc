@@ -1,9 +1,16 @@
-import os
+from pyrc.system.filesystem import FileSystem
 
 class FileSystemTree(object):pass
 
 class FileSystemTree(object):
-	def __init__(self, root:str, parent:FileSystemTree=None, files:'List[str]'=[], dirs:'Dict[str,FileSystemTree]'={}):
+	def __init__(self,
+			path:FileSystem, 
+			root:str,
+			parent:FileSystemTree=None, 
+			files:'list[str]'=[], 
+			dirs:'dict[str,FileSystemTree]'={}
+		):
+		self.path = path
 		self.root = root
 		self.parent = parent
 		self.files = files
@@ -39,7 +46,7 @@ class FileSystemTree(object):
 		"""
 		return sum([len(n.files) + len(n.dirs.keys()) for n in self.nodes])
 
-	def nodes(self) -> 'List[FileSystemTree]':
+	def nodes(self) -> 'list[FileSystemTree]':
 		nodes = [self]
 		stack = list(self.dirs.values())
 		
@@ -52,7 +59,7 @@ class FileSystemTree(object):
 		return sorted(nodes, key=lambda x: int(x.level))
 
 	def realfiles(self):
-		return [os.path.join(self.realpath(), f) for f in self.files]
+		return [self.path.join(self.realpath(), f) for f in self.files]
 
 	def realpath(self):
 		return self.root
@@ -61,12 +68,12 @@ class FileSystemTree(object):
 		ancestors = self.ancestors()
 		ancestors.reverse()
 		ancestors.append(self)
-		return os.path.join(*[n.basename() for n in ancestors])
+		return self.path.join(*[n.basename() for n in ancestors])
 
 	def basename(self):
-		return os.path.basename(self.realpath())
+		return self.path.basename(self.realpath())
 
-	def ancestors(self) -> 'List[FileSystemTree]':
+	def ancestors(self) -> 'list[FileSystemTree]':
 		ancestors = []
 		p = self.parent
 		while p is not None:
@@ -83,27 +90,24 @@ class FileSystemTree(object):
 			return ancestors[-1]
 
 	@staticmethod
-	def get_tree(directory:str, parent = None):
-		tree_root = FileSystemTree(root = os.path.realpath(directory), parent=parent, files=[], dirs={})
-		for root, dirs, files in os.walk(tree_root.realpath()):
-			tree_root.files = files.copy()
-			for dir in dirs :
-				tree_root.dirs[dir] = FileSystemTree.get_tree(os.path.join(root, dir), tree_root) 
-				#FileSystemTree(root = os.path.join(root, dir), parent=None, files=[], dirs={})
-			
-			return tree_root
+	def get_tree(path:FileSystem, directory:str, parent = None):
+		tree_root = FileSystemTree(path = path, root = path.realpath(directory), parent=parent, files=[], dirs={})
+		root, dirs, files = path.walk0(tree_root.realpath())
+		tree_root.files = files.copy()
+		for dir in dirs :
+			tree_root.dirs[dir] = FileSystemTree.get_tree(path, path.join(root, dir), tree_root) 
+		return tree_root
 
 	@staticmethod
-	def get_root(directory:str):
-		tree_root = FileSystemTree(root = os.path.realpath(directory), parent=None, files=[], dirs={})
-		for root, dirs, files in os.walk(tree_root.realpath()):
-			tree_root.files = files.copy()
-			for dir in dirs :
-				tree_root.dirs[dir] = dir
+	def get_root(path:FileSystem, directory:str):
+		tree_root = FileSystemTree(path = path, root = path.realpath(directory), parent=None, files=[], dirs={})
+		root, dirs, files = path.walk0(tree_root.realpath())
+		tree_root.files = files.copy()
+		for dir in dirs :
+			tree_root.dirs[dir] = dir
+		return tree_root
 
-			return tree_root
-
-
+"""
 def _create_directory(dir_path):
     os.mkdir(dir_path)
 
@@ -195,3 +199,4 @@ def get_size(start_path = '.'):
 				total_size += os.path.getsize(fp)
 				
 	return total_size
+"""

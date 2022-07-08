@@ -1,14 +1,15 @@
 import os, platform
 from pathlib import Path, PosixPath, WindowsPath
-from pyrc.system.filesystem import FileSystem
-import pyrc.event.event as pyevent
-
 try:
     from subprocess import *
     from subprocess import check_output
     _CMDEXEC_SUBPROCESS_ENABLED_ = True
 except:
     _CMDEXEC_SUBPROCESS_ENABLED_ = False
+
+from pyrc.system.filesystem import FileSystem
+from pyrc.system.filesystemtree import FileSystemTree
+import pyrc.event as pyevent
 
 # ------------------ LocalFileSystem
 class LocalFileSystem(FileSystem):
@@ -28,6 +29,15 @@ class LocalFileSystem(FileSystem):
 	#@overrides (to use non pure paths)
 	def abspath(self, path:str) -> str:
 		return str(type(self.__path)(path).resolve(strict = True))
+
+	#@overrides
+	def realpath(self, path:str) -> str:
+		return os.path.realpath(path)
+
+	#@overrides
+	def walk0(self, path:str) -> tuple:
+		for root, dirs, files in os.walk(path):
+			return root, dirs, files
 
 	#@overrides
 	def exec_command(self, cmd:str, cwd:str = "", environment:dict = None, event:pyevent.Event = None):
@@ -83,13 +93,13 @@ class LocalFileSystem(FileSystem):
 		type(self.__path)(path).unlink(missing_ok)
 
 	#@overrides
-	def ls(self, path:str)-> 'List[str]':
-		root = FileSystemTree.get_root(path)
+	def ls(self, path:str)-> 'list[str]':
+		root = FileSystemTree.get_root(self, path)
 		return root.files + list(root.dirs.keys())
 	
 	#@overrides
 	def lsdir(self, path:str):
-		return FileSystemTree.get_tree(path)
+		return FileSystemTree.get_tree(self, path)
 
 	#@overrides
 	def isfile(self, path:str) -> bool:

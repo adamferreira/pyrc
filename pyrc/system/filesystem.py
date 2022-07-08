@@ -69,6 +69,22 @@ class FileSystem:
 	#		To Override
 	# ------------------------
 
+	def realpath(self, path:str) -> str:
+		"""
+		Args:
+			path (str): path to resolve
+
+		Returns:
+			The canonical path of the specified filename by eliminating any symbolic links encountered in the path.
+		"""
+		return NotImplemented
+
+	def walk0(self, path:str) -> tuple:
+		"""
+		equivalement to os.walk[0]
+		"""
+		return NotImplemented
+
 	def exec_command(self, cmd:str, cwd:str = "", environment:dict = None, event:pyevent.Event = None):
 		"""
 		Executes the given command on the connected system in a given directory

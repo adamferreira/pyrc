@@ -14,6 +14,20 @@ class FileSystemCommand(FileSystem):
 	# ------------------------
 	#		To Override
 	# ------------------------
+
+	#@overrides
+	def walk0(self, path:str) -> tuple:
+		root = self.abspath(path)
+		files = []
+		dirs = []
+		files_and_dirs = self.ls(root)
+		for fad in files_and_dirs:
+			if self.isfile(fad):
+				files.append(fad)
+			if self.isdir(fad):
+				dirs.append(fad)
+
+		return root, dirs, files
 	
 	#@overrides
 	def mkdir(self, path:str, mode=0o777, parents=False, exist_ok=False):
