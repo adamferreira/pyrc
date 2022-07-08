@@ -400,7 +400,7 @@ class FileSystem(object):
 		"""
 		Create the file empty <path>
 		Args:
-			path (str): [description]
+			path (str): file to create
 
 		Raises:
 			RuntimeError: if parent(path) is not a valid directory

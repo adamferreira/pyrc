@@ -113,5 +113,18 @@ class FileSystem:
 			path (str): path to remove
 			missing_ok (bool, optional): Defaults to False.
 		"""
+		return NotImplemented
+
+	def touch(self, path:str) -> None:
+		"""
+		Create the file empty <path>
+		Args:
+			path (str): file to create
+
+		Raises:
+			RuntimeError: if parent(path) is not a valid directory
+		"""
+		return NotImplemented
+		
 
 # ------------------ FileSystem

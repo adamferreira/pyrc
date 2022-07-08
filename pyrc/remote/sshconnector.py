@@ -2,10 +2,14 @@ import paramiko
 import getpass
 from scp import SCPClient, SCPException
 import pyrc.event.event as pyevent
-from pyrc.system.filesystem import FileSystem
+from pyrc.system.command import FileSystemCommand
 
 # ------------------ RemoteSSHFileSystem
-class RemoteSSHFileSystem(FileSystem):
+class RemoteSSHFileSystem(FileSystemCommand):
+	"""
+	RemoteSSHFileSystem is will submit evey generated command (FileSystemCommand)
+	to a remote machine throuth a SSH connection
+	"""
 
 	@property
 	def hostname(self) -> str:
