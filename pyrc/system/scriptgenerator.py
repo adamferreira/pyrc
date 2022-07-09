@@ -1,5 +1,6 @@
 import pyrc.system as pysys
-from pyrc.system.command import FileSystemCommand
+from pyrc.system import FileSystemCommand
+from pyrc.system import FileSystem
 
 class ScriptGenerator(FileSystemCommand):
 	"""
@@ -9,12 +10,15 @@ class ScriptGenerator(FileSystemCommand):
 	def __init__(self, 
 			script_path:str, 
 			ostype:pysys.OSTYPE = pysys.OSTYPE.LINUX
-		):
+		) -> None:
+
+		FileSystemCommand.__init__(self)
+
 		# Set up type
 		self.ostype = ostype
 
-		# Seyup script file
-		assert self.isdir(self.dirname(script_path))
+		# Setup script file
+		assert pysys.LocalFileSystem().isdir(pysys.LocalFileSystem().dirname(script_path))
 		self.script = open(script_path, "w+")
 		self.__last_printed_env:str = ""
 
@@ -41,5 +45,24 @@ class ScriptGenerator(FileSystemCommand):
 		# Trick so that 'isdir', 'isfile', etc always returns 'True'
 		# Because the connection is fake and pyrc-using python scripts would like to use those check
 		# when using genuine remote connector
-		# stdout = ["ok"], stderr = []
-		return ["ok"], []
+		# stdout = ["ok"], stderr = [], status = 0
+		return ["ok"], [], 0
+
+	#@overrides Necessary for FileSystem.__init__(self) as we overrides ostype
+	def platform(self) -> 'dict[str:str]':
+		return {
+			"system" : FileSystem.os_to_str(FileSystem.ostype),
+			"platform" : "unknown"
+		}
+
+	#@overrides
+	def is_remote(self) -> bool:
+		return False
+
+	#@overrides
+	def is_open(self) -> bool:
+		return True
+
+	#@overrides (useless fct)
+	def env(self, var:str) -> str:
+		return self.exec_command(f"${var}")

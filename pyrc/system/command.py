@@ -9,7 +9,7 @@ class FileSystemCommand(FileSystem):
 	This is the exact opposite of LocalFileSystem which would call os.mkdir(...).
 	"""
 	def __init__(self) -> None:
-		super().__init__()
+		FileSystem.__init__(self)
 
 	# ------------------------
 	#		To Override

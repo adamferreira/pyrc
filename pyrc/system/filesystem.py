@@ -21,7 +21,6 @@ class FileSystem:
 
 	def __deduce_ostype(self) -> OSTYPE:
 		system = self.system()
-
 		if system == "Windows":
 			return OSTYPE.WINDOWS
 		elif "Linux" in system:
@@ -30,6 +29,17 @@ class FileSystem:
 			return OSTYPE.MACOS
 		else:
 			return OSTYPE.UNKNOW
+			
+	@staticmethod
+	def os_to_str(os:OSTYPE) -> str:
+		if os == OSTYPE.WINDOWS:
+			return "Windows"
+		elif os  == OSTYPE.LINUX:
+			return "Linux"
+		elif os == OSTYPE.MACOS:
+			return "MacOS"
+		else:
+			return "unknown"
 
 	def __init__(self) -> None:
 		self.__ostype:OSTYPE = self.__deduce_ostype()
