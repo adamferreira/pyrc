@@ -50,7 +50,10 @@ class EventFlux(Event):
         # We assume is a pipe-style object like in paramiko or subprocess
         out:str = None
         if isinstance(flux, Generator):
-            out = next(flux)
+            try:
+                out = next(flux)
+            except:
+                return None
         else:
             out = flux.readline()
             if not out : return None
