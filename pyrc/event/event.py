@@ -1,4 +1,3 @@
-from tkinter.messagebox import NO
 from typing import Generator
 import rich
 from pyrc.event.progress import RemoteFileTransfer
@@ -48,6 +47,7 @@ class EventFlux(Event):
     def next_flux(flux) -> str:
         # If the flux is not we generator
         # We assume is a pipe-style object like in paramiko or subprocess
+        if flux is None: return None
         out:str = None
         if isinstance(flux, Generator):
             try:
