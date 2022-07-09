@@ -51,6 +51,8 @@ def test_fs(
     assert not path.isdir(tmpdir)
     print("Done !")
 
+    path.exec_command("ls /mnt")
+
 def test_script_generator():
     local = pysys.LocalFileSystem()
     script = pysys.ScriptGenerator(
@@ -60,7 +62,7 @@ def test_script_generator():
 
 
 if __name__ == '__main__':
-    test_script_generator()
-    #test_fs(pysys.LocalFileSystem(), currentdir())
+    #test_script_generator()
+    test_fs(pysys.LocalFileSystem(), currentdir())
     #print(pysys.FileSystemTree.get_root(pysys.LocalFileSystem(), pysys.LocalFileSystem().dirname(currentdir())))
     #print(pysys.LocalFileSystem().lsdir(pysys.LocalFileSystem().dirname(currentdir())))

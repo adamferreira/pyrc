@@ -1,3 +1,4 @@
+from typing import Generator
 import rich
 from pyrc.event.progress import RemoteFileTransfer
 
@@ -29,7 +30,39 @@ class Event(object):
     def progress(self, *args, **kwargs):
         return None
 
-class CommandStorer(Event):
+class EventFlux(Event):
+
+    def __init__(self, caller, *args, **kwargs):
+        Event.__init__(self, caller)
+        self._stdinflux = None
+        self._stdoutflux = None
+        self._stderrflux = None
+
+    def begin(self, cmd, cwd, stdin, stdout, stderr):
+        self._stdinflux = stdin
+        self._stdoutflux = stdout
+        self._stderrflux = stderr
+
+    @staticmethod
+    def next_flux(flux) -> str:
+        # If the flux is not we generator
+        # We assume is a pipe-style object like in paramiko or subprocess
+        if isinstance(flux, Generator):
+            return next(flux)
+        else:
+            out = flux.readline()
+            if not out : return None
+            if type(out) != str:
+                out = out.decode("utf-8")
+            return out
+
+    def next_stdout(self) -> str:
+        return self.next_flux(self._stdoutflux)
+
+    def next_stderr(self) -> str:
+        return self.next_flux(self._stderrflux)
+
+class CommandStorer(EventFlux):
     """
     Base Event used to store captured stdout and stderr of a launched command.
     end() returns all stdout and stderr lines captured.
@@ -43,21 +76,16 @@ class CommandStorer(Event):
         return self.__cwd
 
     def __init__(self, caller, *args, **kwargs):
-        Event.__init__(self, caller)
+        EventFlux.__init__(self, caller)
         self.__stdout:'list[str]' = [] 
         self.__stderr:'list[str]' = []
-        self.__stdinflux = None
-        self.__stdoutflux = None
-        self.__stderrflux = None
         self.__cmd:str = ""
         self.__cwd:str = ""
 
     def begin(self, cmd, cwd, stdin, stdout, stderr):
+        EventFlux.begin(self, cmd, cwd, stdin, stdout, stderr)
         self.__cmd = cmd
         self.__cwd = cwd
-        self.__stdinflux = stdin
-        self.__stdoutflux = stdout
-        self.__stderrflux = stderr
 
     def progress(self, stdoutline:str, stderrline:str):
         if stdoutline != "":
@@ -70,8 +98,8 @@ class CommandStorer(Event):
         # Only check status when using paramiko channels
         # It is only used because paramiko tends to feed errors even for non 0 status
         # This does not occurs with other librarys
-        if type(self.__stdoutflux) == 'ChannelFile':
-            return self.__stdoutflux.channel.recv_exit_status()
+        if type(self._stdoutflux) == 'ChannelFile':
+            return self._stdoutflux.channel.recv_exit_status()
         else: # defulat status is 'ok' status
             return 0;
 
@@ -101,11 +129,8 @@ class CommandScrapper(Event):
         # So we read all stdout first, then all stderr
         self._errflux = stderr
         while True:
-            out = stdout.readline()
-            if not out: break
-            if type(out) != str:
-                out = out.decode("utf-8")
-                
+            out = EventFlux.next_flux(stdout)
+            if out is None : break
             self.progress(
                 stdoutline = out.strip('\n'), 
                 stderrline = ""
@@ -113,15 +138,13 @@ class CommandScrapper(Event):
 
     def end(self):
         while True:
-            out = self._errflux.readline()
-            if not out: break
-            if type(out) != str:
-                out = out.decode("utf-8")
+            out = EventFlux.next_flux(self._errflux)
+            if out is None : break
             self.progress(
                 stdoutline = "",
                 stderrline = out.strip('\n'), 
                 )
-
+"""
 class CommandScrapper2(Event):
     def __init__(self, caller, *args, **kwargs):
         Event.__init__(self, caller)
@@ -141,6 +164,7 @@ class CommandScrapper2(Event):
                 stderrline = err.strip('\n')
                 )
             if not out: break
+"""
 
 class CommandStoreEvent(CommandStorer, CommandScrapper):
     def __init__(self, caller = None, *args, **kwargs):
