@@ -1,3 +1,4 @@
+from tkinter.messagebox import NO
 from typing import Generator
 import rich
 from pyrc.event.progress import RemoteFileTransfer
@@ -47,14 +48,18 @@ class EventFlux(Event):
     def next_flux(flux) -> str:
         # If the flux is not we generator
         # We assume is a pipe-style object like in paramiko or subprocess
+        out:str = None
         if isinstance(flux, Generator):
-            return next(flux)
+            out = next(flux)
         else:
             out = flux.readline()
             if not out : return None
-            if type(out) != str:
-                out = out.decode("utf-8")
-            return out
+
+        if out is None : return None
+        
+        if type(out) != str:
+            out = out.decode("utf-8")
+        return out.strip('\n')
 
     def next_stdout(self) -> str:
         return self.next_flux(self._stdoutflux)
@@ -132,7 +137,7 @@ class CommandScrapper(Event):
             out = EventFlux.next_flux(stdout)
             if out is None : break
             self.progress(
-                stdoutline = out.strip('\n'), 
+                stdoutline = out,
                 stderrline = ""
                 )
 
@@ -142,7 +147,7 @@ class CommandScrapper(Event):
             if out is None : break
             self.progress(
                 stdoutline = "",
-                stderrline = out.strip('\n'), 
+                stderrline = out, 
                 )
 """
 class CommandScrapper2(Event):
