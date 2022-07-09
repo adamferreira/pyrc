@@ -13,6 +13,40 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+class FluxIterator:
+    @staticmethod
+    def next(flux) -> str:
+        # If the flux is not we generator
+        # We assume is a pipe-style object like in paramiko or subprocess
+        if flux is None: return None
+        out:str = None
+        if isinstance(flux, Generator):
+            try:
+                out = next(flux)
+            except:
+                return None
+        else:
+            out = flux.readline()
+            if not out : return None
+
+        if out is None : return None
+        
+        if type(out) != str:
+            out = out.decode("utf-8")
+        return out.strip('\n')
+
+    def __init__(self, flux):
+        self._flux = flux
+
+    def __iter__(self):
+        return self
+
+    def __next__(self): # Python 2: def next(self)
+        n = FluxIterator.next(self._flux)
+        if n is None:
+            raise StopIteration
+        return n
+
 class Event(object):
     @property
     def caller(self):
@@ -43,32 +77,20 @@ class EventFlux(Event):
         self._stdoutflux = stdout
         self._stderrflux = stderr
 
-    @staticmethod
-    def next_flux(flux) -> str:
-        # If the flux is not we generator
-        # We assume is a pipe-style object like in paramiko or subprocess
-        if flux is None: return None
-        out:str = None
-        if isinstance(flux, Generator):
-            try:
-                out = next(flux)
-            except:
-                return None
-        else:
-            out = flux.readline()
-            if not out : return None
-
-        if out is None : return None
-        
-        if type(out) != str:
-            out = out.decode("utf-8")
-        return out.strip('\n')
-
     def next_stdout(self) -> str:
-        return self.next_flux(self._stdoutflux)
+        return FluxIterator.next(self._stdoutflux)
 
     def next_stderr(self) -> str:
-        return self.next_flux(self._stderrflux)
+        return FluxIterator.next(self._stderrflux)
+
+    def status(self):
+        # Only check status when using paramiko channels
+        # It is only used because paramiko tends to feed errors even for non 0 status
+        # This does not occurs with other librarys
+        if type(self._stdoutflux) == 'ChannelFile':
+            return self._stdoutflux.channel.recv_exit_status()
+        else: # defulat status is 'ok' status
+            return 0
 
 class CommandStorer(EventFlux):
     """
@@ -101,15 +123,6 @@ class CommandStorer(EventFlux):
 
         if stderrline != "":
             self.__stdout.append(stderrline)
-            
-    def status(self):
-        # Only check status when using paramiko channels
-        # It is only used because paramiko tends to feed errors even for non 0 status
-        # This does not occurs with other librarys
-        if type(self._stdoutflux) == 'ChannelFile':
-            return self._stdoutflux.channel.recv_exit_status()
-        else: # defulat status is 'ok' status
-            return 0;
 
     def end(self):
         return self.__stdout, self.__stderr, self.status()
@@ -126,7 +139,7 @@ class CommandStorer(EventFlux):
 #    if output:
 #        self.progress(output.strip())
 #rc = process.poll()
-class CommandScrapper(Event):
+class CommandScrapper2(Event):
     def __init__(self, caller = None, *args, **kwargs):
         Event.__init__(self, caller)
         self._errflux = None
@@ -152,27 +165,21 @@ class CommandScrapper(Event):
                 stdoutline = "",
                 stderrline = out, 
                 )
-"""
-class CommandScrapper2(Event):
+
+class CommandScrapper(Event):
     def __init__(self, caller, *args, **kwargs):
         Event.__init__(self, caller)
+        self._errit = None
 
     def begin(self, cmd, cwd, stdin, stdout, stderr):
-        while True:
-            out = stdout.readline()
-            if type(out) != str:
-                out = out.decode("utf-8")
+        self._errit = FluxIterator(stderr)
+        for out in FluxIterator(stdout):
+            self.progress(stdoutline = out, stderrline = "")
 
-            err = stderr.readline()
-            if type(err) != str:
-                err = err.decode("utf-8")
-                
-            self.progress(
-                stdoutline = out.strip('\n'), 
-                stderrline = err.strip('\n')
-                )
-            if not out: break
-"""
+    def end(self):
+        for out in self._errit:
+            self.progress(stdoutline = out, stderrline = "")
+
 
 class CommandStoreEvent(CommandStorer, CommandScrapper):
     def __init__(self, caller = None, *args, **kwargs):
