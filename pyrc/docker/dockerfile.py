@@ -7,7 +7,7 @@ class DockerFile(ScriptGenerator):
 	"""
 	DockerFile is a ScriptGenerator that store dockerfile-like commands in a dockerfile
 	"""
-	def __init__(self, dockerfile:str, silent = True) -> None:
+	def __init__(self, dockerfile:str, silent = False) -> None:
 		ScriptGenerator.__init__(
 			self,
 			script_path = dockerfile,

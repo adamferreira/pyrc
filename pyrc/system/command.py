@@ -1,4 +1,5 @@
 from pyrc.system.filesystem import FileSystem
+from pyrc.system.filesystemtree import FileSystemTree
 import pyrc.event.event as pyevent
 
 # ------------------ FileSystemCommad
@@ -66,9 +67,22 @@ class FileSystemCommand(FileSystem):
 			return out
 
 	#@overrides
+	def walk0(self, path:str) -> tuple:
+		root = self.abspath(path)
+		files = []
+		dirs = []
+		files_and_dirs = self.ls(root)
+		for fad in files_and_dirs:
+			if self.isfile(fad):
+				files.append(fad)
+			if self.isdir(fad):
+				dirs.append(fad)
+
+		return root, dirs, files
+
+	#@overrides
 	def lsdir(self, path:str):
-		# Do nothing
-		return None
+		return FileSystemTree.get_tree(self, path)
 
 	#@overrides
 	def isfile(self, path:str) -> bool:

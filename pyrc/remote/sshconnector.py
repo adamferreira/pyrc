@@ -147,24 +147,6 @@ class RemoteSSHFileSystem(FileSystemCommand):
 		output = self.check_output("python -c \"import platform; print(platform.system()); print(platform.release())\"")
 		return { "system" : output[0], "release" : output[1] }
 
-	#@overrides
-	def walk0(self, path:str) -> tuple:
-		root = self.abspath(path)
-		files = []
-		dirs = []
-		files_and_dirs = self.ls(root)
-		for fad in files_and_dirs:
-			if self.isfile(fad):
-				files.append(fad)
-			if self.isdir(fad):
-				dirs.append(fad)
-
-		return root, dirs, files
-
-	#@overrides
-	def lsdir(self, path:str):
-		return FileSystemTree.get_tree(self, path)
-
 
 	# --------------------------------------------------
 	def __upload_files(self, local_paths:'List[str]', remote_path:str):
