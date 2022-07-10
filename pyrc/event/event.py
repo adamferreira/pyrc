@@ -239,7 +239,7 @@ class CommandPrettyPrintEvent(CommandStoreEvent):
     def __cmdline(self, line:str) -> None:
         line = f"$({line})"
         if self._use_rich:
-            self.console.print(f"[magenta]{line}[/magenta]")
+            self.console.print(f"[deep_pink3]{line}[/deep_pink3]") #magenta3
             #self.console.print(line, style ="deep_pink4")
         else:
             print(bcolors.HEADER + line + bcolors.ENDC)
