@@ -55,3 +55,7 @@ class DockerFile(ScriptGenerator):
 	def USER(self, user:str) -> "DockerFile":
 		self.exec_command(f"{self.USER.__name__} {user}")
 		return self
+
+	def ENTRYPOINT(self, user:str) -> "DockerFile":
+		self.exec_command(f"{self.ENTRYPOINT.__name__} {user}")
+		return self

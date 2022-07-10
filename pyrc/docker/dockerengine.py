@@ -33,7 +33,7 @@ class DockerEngine(FileSystemCommand):
 			)
 
 		exit_code, outputs = self.container.exec_run(
-			cmd = cmd,
+			cmd = f"bash -c \"{cmd}\"",
 			workdir = cwd,
 			environment = environment,
 			stdout = True, stderr = True, stdin = False,
@@ -50,3 +50,8 @@ class DockerEngine(FileSystemCommand):
 			"system" : FileSystem.os_to_str(FileSystem.ostype),
 			"platform" : "unknown"
 		}
+
+	#@overrides
+	def ls(self, path:str)-> 'list[str]':
+		out = super().ls(path)
+		return out[0].split("\n")
