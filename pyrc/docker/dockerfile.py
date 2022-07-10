@@ -1,4 +1,4 @@
-from ctypes import Union
+from typing import Union
 from typing import List
 from pyrc.event import CommandPrettyPrintEvent
 from pyrc.system import ScriptGenerator, OSTYPE
