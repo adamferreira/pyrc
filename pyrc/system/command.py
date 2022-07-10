@@ -57,7 +57,7 @@ class FileSystemCommand(FileSystem):
 			raise RuntimeError("unlink is only available on unix remote systems.")
 
 	#@overrides
-	def ls(self, path:str)-> 'List[str]':
+	def ls(self, path:str)-> 'list[str]':
 		if self.is_unix():
 			out, err, status = self.exec_command(cmd = f"ls {path}", event=pyevent.ErrorRaiseEvent())
 			return out
