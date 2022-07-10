@@ -1,6 +1,10 @@
 from typing import Generator
 import rich
+from rich.console import Console
 from pyrc.event.progress import RemoteFileTransfer
+
+class RemoteSSHFileSystem:pass
+
 
 class bcolors:
     HEADER = '\033[95m'
@@ -210,17 +214,52 @@ class ErrorRaiseEvent(CommandStoreEvent):
 
 
 class CommandPrettyPrintEvent(CommandStoreEvent):
-    def __init__(self, caller, print_input = True, print_errors = False, *args, **kwargs):
+    def __init__(
+            self, 
+            caller, 
+            print_input = True, 
+            print_errors = False, 
+            use_rich = True, 
+            *args, 
+            **kwargs
+        ):
         CommandStoreEvent.__init__(self, caller)
         self._print_input = print_input
         self._print_errors = print_errors
+        self._use_rich = use_rich
+        self.console = Console() if self._use_rich else None
+
+
+    def __callerline(self, line:str) -> None:
+        if self._use_rich:
+            self.console.print(line, style ="bright_green", end=":")
+        else:
+            print(bcolors.OKGREEN + line + bcolors.ENDC, end=":")
+
+    def __cmdline(self, line:str) -> None:
+        line = f"$({line})"
+        if self._use_rich:
+            self.console.print(f"[magenta]{line}[/magenta]")
+            #self.console.print(line, style ="deep_pink4")
+        else:
+            print(bcolors.HEADER + line + bcolors.ENDC)
+
+    def __dirline(self, line:str) -> None:
+        if self._use_rich:
+           self.console.print(line, style ="dodger_blue3", end = " -> ")
+        else:
+            print(bcolors.OKBLUE + line + bcolors.ENDC, end = " -> ")
+    
 
     def begin(self, cmd, cwd, stdin, stdout, stderr):
         if self._print_input:
-            if self.caller is not None and self.caller.is_remote():
-                print(bcolors.OKGREEN + f"{self.caller.connector.user}@{self.caller.connector.hostname}" + bcolors.ENDC, end=":")
-            print(bcolors.OKBLUE +  f"{cwd}" + bcolors.ENDC, end = " -> ")
-            print(bcolors.HEADER + f"$[{cmd}]" + bcolors.ENDC)
+            if isinstance(self.caller, RemoteSSHFileSystem):
+                self.__callerline(f"{self.caller.user}@{self.caller.hostname}")
+            else:
+                self.__callerline(f"{type(self.caller)}")
+            
+            self.__dirline(cwd)
+            self.__cmdline(cmd)
 
         CommandStoreEvent.begin(self, cmd, cwd, stdin, stdout, stderr)
 
