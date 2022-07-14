@@ -3,6 +3,11 @@ from pyrc.system import FileSystemCommand
 from pyrc.system import FileSystem
 
 class ScriptGenerator(FileSystemCommand):
+
+	@property
+	def filename(self) -> str:
+		return self.script.name
+
 	"""
 	ScriptGenerator is will submit evey generated command (FileSystemCommand)
 	to a file by overriding exec_command
@@ -23,7 +28,10 @@ class ScriptGenerator(FileSystemCommand):
 		self.__last_printed_env:str = ""
 
 	def __del__(self):
-		if self.script is not None:
+		self.close()
+		
+	def close(self):
+		if self.script is not None and not self.script.closed:
 			self.script.close()
 
 	#@overrides
