@@ -28,7 +28,7 @@ class DockerFile(ScriptGenerator):
 			return self.exec_command(
 						cmd = cmd, 
 						cwd = cwd,
-						environment = environment,
+						environment = None,
 						event = self.default_event()
 					)
 		else:

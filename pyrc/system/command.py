@@ -159,6 +159,15 @@ class FileSystemCommand(FileSystem):
 			return NotImplemented
 
 	#@overrides
+	def append(self, line:str, file:str) -> None:
+		assert self.isfile(file)
+		if self.is_unix():
+			self.evaluate(f"echo \"{line}\" | tee {file}")
+		else:
+			raise RuntimeError("append not supported for Windows remote systems")
+
+
+	#@overrides
 	def env(self, var:str) -> str:
 		if self.is_unix():
 			return self.evaluate_path("$"+var)

@@ -41,6 +41,8 @@ class LocalFileSystem(FileSystem):
 
 	#@overrides
 	def exec_command(self, cmd:str, cwd:str = "", environment:dict = None, event:pyevent.Event = None):
+		environment = {} if environment is None else dict(environment)
+		environment.update(self.environ)
 		event = pyevent.CommandPrettyPrintEvent(self) if event is None else event
 		p = Popen([f"cd {cwd};{cmd}"], stdin = PIPE, stdout = PIPE, stderr = PIPE, env = environment, shell = True)
 		event.begin(cmd, cwd, p.stdin, p.stdout, p.stderr)

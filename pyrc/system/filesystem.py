@@ -11,6 +11,21 @@ class OSTYPE(Enum):
 # ------------------ FileSystem
 class FileSystem:
 
+	class EnvironDict(dict[str:str]):
+		def __init__(self, path:'FileSystem'):
+			super().__init__()
+			self.__path = path
+
+		def __getitem__(self, key:str) -> str:
+			if key in self:
+				return super().__getitem__(key)
+			else:
+				self.__setitem__(key, self.__path.env(key))
+				return super().__getitem__(key)
+
+		def __setitem__(self, key, value):
+			return super().__setitem__(key, value)
+
 	@property
 	def ostype(self) -> OSTYPE:
 		return self.__ostype
@@ -48,6 +63,9 @@ class FileSystem:
 			self.__path = PurePosixPath()
 		else:
 			self.__path = PureWindowsPath()
+
+		# Environment variables
+		self.environ = FileSystem.EnvironDict(self)
 
 	# ------------------------
 	#		Custom functions
@@ -273,6 +291,12 @@ class FileSystem:
 
 		Returns:
 			int: size (in bytes) of the path (file or folder)
+		"""
+		return NotImplemented
+
+	def append(self, line:str, file:str) -> None:
+		"""
+		Append the given file with the given line
 		"""
 		return NotImplemented
 
