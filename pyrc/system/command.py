@@ -15,6 +15,23 @@ class FileSystemCommand(FileSystem):
 	# ------------------------
 	#		To Override
 	# ------------------------
+
+	def evaluate(self, cmd:str, cwd:str = "", environment:dict = None) -> 'list[str]':
+		"""
+		Execute silently a command inside the connector and returns its standart output
+		"""
+		out, err, status = self.exec_command(cmd, cwd, environment, pyevent.ErrorRaiseEvent(self))
+		return out
+
+	def evaluate_path(self, path:str) -> str:
+		"""
+		Evaluate the path inside the connector and return its full value with variable evaluation
+		"""
+		if self.is_unix():
+			out, err, status = self.exec_command(f"echo {path}", event = pyevent.CommandStoreEvent(self))
+			return out[0] if (len(out) > 0 and len(err) == 0) else None
+		else:
+			raise RuntimeError("unlink is only available on unix remote systems.")
 	
 	#@overrides
 	def mkdir(self, path:str, mode=0o777, parents=False, exist_ok=False):
@@ -143,6 +160,9 @@ class FileSystemCommand(FileSystem):
 
 	#@overrides
 	def env(self, var:str) -> str:
-		return self.check_output(f"python -c \"import os; print(os.environ[\'{var}\'])\"")[0]
+		if self.is_unix():
+			return self.evaluate_path("$"+var)
+		else:
+			return self.check_output(f"python -c \"import os; print(os.environ[\'{var}\'])\"")[0]
 
 # ------------------ FileSystemCommad

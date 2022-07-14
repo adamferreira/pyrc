@@ -1,4 +1,5 @@
 
+from typing import Union, List
 from pyrc.system import FileSystem, FileSystemCommand, OSTYPE
 from pyrc.event import CommandPrettyPrintEvent
 
@@ -13,10 +14,11 @@ class DockerEngine(FileSystemCommand):
 	DockerEngine is will submit evey generated command (FileSystemCommand)
 	to a docker client
 	"""
-	def __init__(self, image = None, container = None) -> None:
+	def __init__(self, user:str, image = None, container = None) -> None:
 		FileSystemCommand.__init__(self)
 		# Only works with linux style commands for now
 		self.ostype = OSTYPE.LINUX
+		self.user = user
 		self.image = image
 		self.container = container
 
@@ -24,7 +26,34 @@ class DockerEngine(FileSystemCommand):
 	def exec_command(self, cmd:str, cwd:str = "", environment:dict = None, event = None):
 		assert self.container is not None
 
-		if event is None:
+		# to avoid "OCI runtime exec failed: exec failed: Cwd must be an absolute path: unknown"
+		# check if cwd is empty ot avoid recursive call
+		workdir = cwd if cwd == "" else self.evaluate_path(cwd)
+
+		exit_code, outputs = self.container.exec_run(
+			cmd = f"bash -c \"{cmd}\"",
+			# to avoid "OCI runtime exec failed: exec failed: Cwd must be an absolute path: unknown"
+			workdir = workdir,
+			environment = environment,
+			user = self.user,
+			stdout = True, stderr = True, stdin = False,
+			demux = False, # Return stdout and stderr separately,
+			stream = True
+		)
+
+		if event is not None:
+			srdoutflux = outputs # Output is a Generator type (isinstance(outputs, Generator) == 1)
+			event.begin(cmd, workdir, stdin = None, stderr = None, stdout = srdoutflux)
+			return event.end()
+
+		return [], [], []
+
+	def bash(self, cmds:Union[str, List[str]], cwd:str = "", silent:bool = False, environment:dict = None):
+		if isinstance(cmds, str):
+			return self.bash([cmds], cwd, environment)
+
+		event = None
+		if not silent:
 			event = CommandPrettyPrintEvent(
 				self, 
 				print_input=True, 
@@ -32,17 +61,11 @@ class DockerEngine(FileSystemCommand):
 				use_rich=True
 			)
 
-		exit_code, outputs = self.container.exec_run(
-			cmd = f"bash -c \"{cmd}\"",
-			workdir = cwd,
-			environment = environment,
-			stdout = True, stderr = True, stdin = False,
-			demux = False, # Return stdout and stderr separately,
-			stream = True
-		)
-		srdoutflux = outputs # Output is a Generator type (isinstance(outputs, Generator) == 1)
-		event.begin(cmd, cwd, stdin = None, stderr = None, stdout = srdoutflux)
-		return event.end() 
+		outputs = []
+		for cmd in cmds:
+			out, err, status = self.exec_command(cmd, cwd, environment, event)
+			outputs.extend(out)
+		return outputs
 
 	#@overrides Necessary for FileSystem.__init__(self) as we overrides ostype
 	def platform(self) -> 'dict[str:str]':

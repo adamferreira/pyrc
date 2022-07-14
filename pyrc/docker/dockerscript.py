@@ -1,5 +1,4 @@
-from typing import Union
-from typing import List
+from typing import Union, List
 from pyrc.event import CommandPrettyPrintEvent
 from pyrc.system import ScriptGenerator, OSTYPE
 
@@ -7,7 +6,7 @@ class DockerFile(ScriptGenerator):
 	"""
 	DockerFile is a ScriptGenerator that store dockerfile-like commands in a dockerfile
 	"""
-	def __init__(self, dockerfile:str, silent = False) -> None:
+	def __init__(self, dockerfile:str, silent:bool = False) -> None:
 		ScriptGenerator.__init__(
 			self,
 			script_path = dockerfile,
@@ -37,8 +36,7 @@ class DockerFile(ScriptGenerator):
 			event.end()
 
 		self.script.writelines([
-			f"{cmd}\n",
-			"\n"
+			f"{cmd}\n"
 		])
 
 	def FROM(self, image:str) -> "DockerFile":
@@ -58,4 +56,8 @@ class DockerFile(ScriptGenerator):
 
 	def ENTRYPOINT(self, user:str) -> "DockerFile":
 		self.exec_command(f"{self.ENTRYPOINT.__name__} {user}")
+		return self
+
+	def ENV(self, var:str, value:str) -> "DockerFile":
+		self.exec_command(f"{self.ENV.__name__} {var} {value}")
 		return self
