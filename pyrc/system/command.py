@@ -31,7 +31,7 @@ class FileSystemCommand(FileSystem):
 			out, err, status = self.exec_command(f"echo {path}", event = pyevent.CommandStoreEvent(self))
 			return out[0] if (len(out) > 0 and len(err) == 0) else None
 		else:
-			raise RuntimeError("unlink is only available on unix remote systems.")
+			raise RuntimeError("evaluate_path is only available on unix remote systems.")
 	
 	#@overrides
 	def mkdir(self, path:str, mode=0o777, parents=False, exist_ok=False):

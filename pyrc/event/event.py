@@ -267,7 +267,10 @@ class CommandPrettyPrintEvent(CommandStoreEvent):
         CommandStoreEvent.progress(self, stdoutline, stderrline)
         
         if stdoutline != "":
-            print(("\t" if self._print_input else "") + stdoutline)
+            if self._use_rich:
+                rich.print(("\t" if self._print_input else "") + stdoutline)
+            else:
+                print(("\t" if self._print_input else "") + stdoutline)
             
         if stderrline != "" and self._print_errors:
             # Sometime a log of-non erros logs (warnings for example) ends up in the error flux
