@@ -4,6 +4,7 @@ from scp import SCPClient, SCPException
 import pyrc.event.event as pyevent
 from pyrc.system.command import FileSystemCommand
 from pyrc.system.filesystemtree import FileSystemTree
+from pyrc.system.filesystem import OSTYPE
 
 # ------------------ RemoteSSHFileSystem
 class RemoteSSHFileSystem(FileSystemCommand):
@@ -14,45 +15,65 @@ class RemoteSSHFileSystem(FileSystemCommand):
 
 	@property
 	def hostname(self) -> str:
-		return self._hostname
+		return self._kwargs["hostname"]
 
 	@property
-	def proxycommand(self) -> str:
-		return self._proxycommand
-
-	@property
-	def use_proxy(self) -> bool:
-		return self._proxycommand is not None and self._proxycommand != ""
+	def proxy(self) -> str:
+		return self._kwargs["proxy"]
 
 	@property
 	def user(self) -> str:
-		return str(self._user)
-
-	@property
-	def sshkey(self) -> str:
-		return str(self._sshkey)
+		return self._kwargs["username"]
 
 	@property
 	def port(self) -> int:
-		return str(self._port)
+		return self._kwargs["port"]
 
 	@property
 	def askpwd(self) -> bool:
-		return self._askpwd
+		return self._kwargs["askpwd"]
 
-	@askpwd.setter
-	def askpwd(self, askpwd):
-		self._askpwd = askpwd
+	#@overrides
+	def is_unix(self) -> bool:
+		return True
 
-	def __init__(self, user:str, hostname:str, sshkey:str, port:int = None, proxycommand:str = None, askpwd:bool = False) -> None:
-		self._user:str = user
-		self._hostname:str = hostname
-		self._proxycommand:str = proxycommand
-		self._sshkey:str = sshkey
-		self._port:int = port
-		self._askpwd:bool = askpwd
-		self._sshcon = None
-		self._scp = None
+	def __init__(self, **kwargs) -> None:
+		"""
+		See https://docs.paramiko.org/en/stable/api/client.html
+		Parameters:	
+		hostname (str) – the server to connect to
+		port (int) – the server port to connect to
+		username (str) – the username to authenticate as (defaults to the current local username)
+		password (str) – Used for password authentication; is also used for private key decryption if passphrase is not given.
+		passphrase (str) – Used for decrypting private keys.
+		pkey (PKey) – an optional private key to use for authentication
+		key_filename (str) – the filename, or list of filenames, of optional private key(s) and/or certs to try for authentication
+		timeout (float) – an optional timeout (in seconds) for the TCP connect
+		allow_agent (bool) – set to False to disable connecting to the SSH agent
+		look_for_keys (bool) – set to False to disable searching for discoverable private key files in ~/.ssh/
+		compress (bool) – set to True to turn on compression
+		sock (socket) – an open socket or socket-like object (such as a Channel) to use for communication to the target host
+		gss_auth (bool) – True if you want to use GSS-API authentication
+		gss_kex (bool) – Perform GSS-API Key Exchange and user authentication
+		gss_deleg_creds (bool) – Delegate GSS-API client credentials or not
+		gss_host (str) – The targets name in the kerberos database. default: hostname
+		gss_trust_dns (bool) – Indicates whether or not the DNS is trusted to securely canonicalize the name of the host being connected to (default True).
+		banner_timeout (float) – an optional timeout (in seconds) to wait for the SSH banner to be presented.
+		auth_timeout (float) – an optional timeout (in seconds) to wait for an authentication response.
+		disabled_algorithms (dict) – an optional dict passed directly to Transport and its keyword argument of the same name.
+		Raises:	
+		BadHostKeyException – if the server’s host key could not be verified
+
+		Raises:	
+		AuthenticationException – if authentication failed
+
+		Raises:	
+		SSHException – if there was any other error connecting or establishing an SSH session
+
+		Raises:	
+		socket.error – if a socket error occurred while connecting
+		"""
+		self._kwargs:dict = dict(kwargs)
 
 		# Creating remote connection
 		self._sshcon = paramiko.SSHClient()  # will create the object
@@ -64,27 +85,34 @@ class RemoteSSHFileSystem(FileSystemCommand):
 		self.__dirupload_event = pyevent.RichRemoteDirUploadEvent(self)
 		self.__filesdownload_event = pyevent.FileTransferEvent(self)
 		self.__dirdownload_event = pyevent.RichRemoteDirDownloadEvent(self)
+
+		# Will be set later
+		self.environ = {}
 		
 
 	def __del__(self):
 		self.close()
 
-	def open(self, password:str = None, passphrase:str = None) -> None:
+	def open(self) -> None:
 		"""
 			Opens the remote connection.
 		"""
-		proxy = paramiko.ProxyCommand(self.proxycommand) if self.use_proxy else None
-		pwd = getpass.getpass(prompt=f"Password for {self.user}@{self.hostname}:") if self.askpwd else password
+		askpwd = False
+		args = dict(self._kwargs)
+		if "askpwd" in args:
+			# Remove non paramiko params
+			askpwd = args["askpwd"]
+			del args["askpwd"]
 
-		self._sshcon.connect(
-						self.hostname, 
-						username=self.user, 
-						port=self.port,
-						key_filename=self.sshkey, 
-						password=pwd,
-						passphrase=passphrase,
-						sock=proxy
-					)
+		if askpwd:
+			args["password"] = getpass.getpass(prompt=f"Password for {self.user}@{self.hostname}:")
+
+		if "proxycommand" in args:
+			args["sock"] = paramiko.ProxyCommand(args["proxycommand"])
+			# Remove non paramiko params
+			del args["proxycommand"]
+		
+		self._sshcon.connect(**args)
 
 		# SCP connection
 		self._scp = SCPClient(self._sshcon.get_transport())
@@ -102,8 +130,8 @@ class RemoteSSHFileSystem(FileSystemCommand):
 
 	def __exec_command(self, cmd:str, cwd:str = "", environment:dict = None):
 		env_vars = ""
-		if environment is not None:
-			if self.path.is_unix():
+		if environment is not None and len(environment) > 0:
+			if self.is_unix():
 				env_vars = ';'.join([f"export {var}={environment[var]}" for var in environment.keys()]) + ";"
 			else:
 				raise NotImplemented("Cannot set environment variables for Windows remote systems")
@@ -146,7 +174,7 @@ class RemoteSSHFileSystem(FileSystemCommand):
 		Returns:
 			[dict[str:str]]: A dict of remote system informations. Keys are 'system' and 'release'
 		"""
-		output = self.check_output("python -c \"import platform; print(platform.system()); print(platform.release())\"")
+		output = self.check_output("python3 -c \"import platform; print(platform.system()); print(platform.release())\"")
 		return { "system" : output[0], "release" : output[1] }
 
 
@@ -174,7 +202,7 @@ class RemoteSSHFileSystem(FileSystemCommand):
 
 		if self.remote_file_exists(remote_path):
 			self.rm(remote_path)
-		self.path.mkdir(remote_path, exist_ok=True)
+		self.mkdir(remote_path, exist_ok=True)
 
 		self.dirupload_event.begin(localnode.realpath(), remote_path)
 		self.__upload_files(local_paths=localnode.realfiles(), remote_path=remote_path)
@@ -182,7 +210,7 @@ class RemoteSSHFileSystem(FileSystemCommand):
 
 	def __upload_tree(self, localtree:FileSystemTree, remote_path:str):
 		for n in localtree.nodes():
-			self.__upload_node(localnode = n, remote_path = self.path.join(remote_path, n.relpath()))
+			self.__upload_node(localnode = n, remote_path = self.join(remote_path, n.relpath()))
 			
 
 	def upload(self, local_realpath:str, remote_path:str):
@@ -262,5 +290,4 @@ class RemoteSSHFileSystem(FileSystemCommand):
 				self.rm(remote_folder_path, "-r")
 		else:
 			raise RuntimeError("Remote folder " + remote_folder_path + " cannot be found on " + self._hostname + ".")
-
 # ------------------ RemoteSSHFileSystem

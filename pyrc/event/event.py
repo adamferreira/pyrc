@@ -3,9 +3,6 @@ import rich
 from rich.console import Console
 from pyrc.event.progress import RemoteFileTransfer
 
-class RemoteSSHFileSystem:pass
-
-
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -253,7 +250,7 @@ class CommandPrettyPrintEvent(CommandStoreEvent):
 
     def begin(self, cmd, cwd, stdin, stdout, stderr):
         if self._print_input:
-            if isinstance(self.caller, RemoteSSHFileSystem):
+            if type(self.caller).__name__ ==  'RemoteSSHFileSystem':
                 self.__callerline(f"{self.caller.user}@{self.caller.hostname}")
             else:
                 self.__callerline(f"{type(self.caller)}")

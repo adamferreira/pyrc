@@ -23,9 +23,9 @@ def create_connectors(user_config_file:str, sshkey:str=None) -> 'dict[str:Remote
         # Creating user config dictionnary
         user_config = ssh_configs[hostname]
         connectors[hostname] = RemoteSSHFileSystem(
-            user = user_config["user"],
+            username = user_config["user"],
             hostname = user_config["hostname"],
-            sshkey = sshkey,
+            key_filename = sshkey,
             port = user_config["port"] if "port" in user_config else 22,
             proxycommand = user_config["proxycommand"] if "proxycommand" in user_config else None,
             askpwd = False

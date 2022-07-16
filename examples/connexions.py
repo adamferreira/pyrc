@@ -3,6 +3,16 @@ import pyrc.remote as pyrm
 import pyrc.system as pysys
 import pyrc.event as pyevent
 
+def get_sshdocker():
+    path = pyrm.RemoteSSHFileSystem(
+        username = "aferreira",
+        hostname = "localhost",
+        port = 6022,
+        key_filename = "../containedenv/config/id_rsa"
+    )
+    path.open()
+    return path
+
 def currentdir():
     p = pysys.LocalFileSystem()
     return p.abspath(p.dirname(__file__))
@@ -63,6 +73,6 @@ def test_script_generator():
 
 if __name__ == '__main__':
     #test_script_generator()
-    test_fs(pysys.LocalFileSystem(), currentdir())
-    #print(pysys.FileSystemTree.get_root(pysys.LocalFileSystem(), pysys.LocalFileSystem().dirname(currentdir())))
-    #print(pysys.LocalFileSystem().lsdir(pysys.LocalFileSystem().dirname(currentdir())))
+    #test_fs(pysys.LocalFileSystem(), currentdir())
+    p = get_sshdocker()
+    p.exec_command("ls /home/aferreira/projects")
