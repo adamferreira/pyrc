@@ -39,6 +39,18 @@ class DockerFile(ScriptGenerator):
 			f"{cmd}\n"
 		])
 
+	def _gerenate_cmd(self, flag:str, statements:Union[str, List[str]]):
+		if isinstance(statements, str):
+			return self._gerenate_cmd(flag, [statements])
+
+		if len(statements) == 0: return self
+		if len(statements) == 1:
+			self.exec_command(f"{flag} {statements[0]}")
+		else:
+			run = "; \ \n\t".join(statements)
+			self.exec_command(f"{flag} {run}")
+
+
 	def append_dockerfile(self, dockerfile:str) -> "DockerFile":
 		with open(dockerfile, 'r') as d:
 			for line in d.readlines():
@@ -47,35 +59,33 @@ class DockerFile(ScriptGenerator):
 
 
 	def FROM(self, image:str) -> "DockerFile":
-		self.exec_command(f"{self.FROM.__name__} {image}")
+		self._gerenate_cmd(f"{self.FROM.__name__}", image)
 		return self
 
 	def RUN(self, statements:Union[str, List[str]]) -> "DockerFile":
-		if isinstance(statements, str):
-			return self.RUN([statements])
-
-		if len(statements) == 0: return self
-
-		if len(statements) == 1:
-			self.exec_command(f"{self.RUN.__name__} {statements[0]}")
-		else:
-			run = "; \ \n\t".join(statements)
-			self.exec_command(f"{self.RUN.__name__} {run}")
-
+		self._gerenate_cmd(f"{self.RUN.__name__}", statements)
 		return self
 
 	def USER(self, user:str) -> "DockerFile":
-		self.exec_command(f"{self.USER.__name__} {user}")
+		self._gerenate_cmd(f"{self.USER.__name__}", user)
 		return self
 
 	def ENTRYPOINT(self, user:str) -> "DockerFile":
-		self.exec_command(f"{self.ENTRYPOINT.__name__} {user}")
+		self._gerenate_cmd(f"{self.ENTRYPOINT.__name__}", user)
 		return self
 
 	def ENV(self, var:str, value:str) -> "DockerFile":
-		self.exec_command(f"{self.ENV.__name__} {var} {value}")
+		self._gerenate_cmd(f"{self.ENV.__name__}", f"{var} {value}")
 		return self
 
 	def CMD(self, cmd:str) -> "DockerFile":
-		self.exec_command(f"{self.CMD.__name__} [\"{cmd}\"]")
+		self._gerenate_cmd(f"{self.CMD.__name__}", f"[\"{cmd}\"]")
+		return self
+
+	def COPY(self, src:str, dest:str) -> "DockerFile":
+		self._gerenate_cmd(f"{self.COPY.__name__}", f"{src} {dest}")
+		return self
+
+	def EXPOSE(self, port:int) -> "DockerFile":
+		self._gerenate_cmd(f"{self.EXPOSE.__name__}", f"{port}")
 		return self
