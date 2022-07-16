@@ -34,7 +34,8 @@ def test_fs(
     print(f"Current platform -> {path.platform()}")
     print(f"Current system -> {path.system()}")
 
-    assert path.isfile(__file__)
+    if not path.is_remote():
+        assert path.isfile(__file__)
     assert path.isdir(workspace)
 
     print(f"Creating temporary folder {tmpdir} ...")
@@ -74,5 +75,4 @@ def test_script_generator():
 if __name__ == '__main__':
     #test_script_generator()
     #test_fs(pysys.LocalFileSystem(), currentdir())
-    p = get_sshdocker()
-    p.exec_command("ls /home/aferreira/projects")
+    test_fs(get_sshdocker(), "/home/aferreira")
