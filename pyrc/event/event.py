@@ -292,7 +292,7 @@ class RichRemoteFileTransferEvent(FileTransferEvent):
         self.__progress = None
 
     def begin(self, *args, **kwargs):
-        self.__progress = RemoteFileTransfer(*args, self.caller.user, self.caller.hostname)
+        self.__progress = RemoteFileTransfer(**kwargs)
         return self.__progress.start()
 
     def end(self, *args, **kwargs):

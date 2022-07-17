@@ -282,9 +282,12 @@ class FileSystem:
 		if (not self.isdir(path)) and (not self.isfile(path)):
 			raise RuntimeError(f"Path {path} is not a file or directory.")
 
-		archivename = (path.replace(self.ext(path), ".zip")) if archivename is None else (archivename + ".zip")
+		return (path.replace(self.ext(path), ".zip")) if archivename is None else (archivename + ".zip")
 
-	def get_size(path) -> int:
+	def unzip(self, path:str, archivename:str = None, flag:str = "") -> None:
+		return NotImplemented
+
+	def getsize(self, path) -> int:
 		"""
 		Args:
 			path (str): path to analyse

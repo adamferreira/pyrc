@@ -78,7 +78,7 @@ class FileSystemCommand(FileSystem):
 	def abspath(self, path:str) -> str:
 		if self.is_unix():
 			out, err, status = self.exec_command(cmd = f"realpath {path}", event=pyevent.ErrorRaiseEvent())
-			return out
+			return out[0]
 		else:
 			return NotImplemented
 
@@ -146,15 +146,23 @@ class FileSystemCommand(FileSystem):
 			raise RuntimeError(f"Path {parent} is not a valid directory.")
 
 		if self.is_unix():
-			self.exec_command(f"touch {path}")
+			self.exec_command(f"touch {path}", event=pyevent.ErrorRaiseEvent())
 		else:
-			self.exec_command(f"call > {path}")
+			self.exec_command(f"call > {path}", event=pyevent.ErrorRaiseEvent())
 
 	#@overrides
 	def zip(self, path:str, archivename:str = None, flag:str = "") -> None:
-		FileSystem.zip(self, path, archivename)
+		archivename = FileSystem.zip(self, path, archivename)
 		if self.is_unix():
-			return self.exec_command(f"zip {flag} \"{archivename}\" \"{path}\"")
+			return self.exec_command(f"zip {flag} \"{archivename}\" \"{path}\"", event=pyevent.ErrorRaiseEvent())
+		else:
+			return NotImplemented
+
+	#@overrides
+	def unzip(self, path:str, archivename:str = None, flag:str = "") -> None:
+		archivename = FileSystem.zip(self, path, archivename)
+		if self.is_unix():
+			return self.exec_command(f"unzip {flag} \"{archivename}\" -d \"{path}\"", event=pyevent.ErrorRaiseEvent())
 		else:
 			return NotImplemented
 

@@ -130,16 +130,11 @@ class LocalFileSystem(FileSystem):
 		shutil.make_archive(archivename, 'zip', path)
 
 	#@overrides
-	def get_size(path) -> int:
-		total_size = 0
-		for dirpath, dirnames, filenames in os.walk(path):
-			for f in filenames:
-				fp = os.path.join(dirpath, f)
-				# skip if it is symbolic link
-				if not os.path.islink(fp):
-					total_size += os.path.getsize(fp)
-					
-		return total_size
+	def getsize(self, path) -> int:
+		if self.isfile(path):
+			return os.path.getsize(path)
+		
+		# TODO !!!! FileSystemTree
 
 	#@overrides
 	def env(self, var:str) -> str:

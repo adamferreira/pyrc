@@ -196,7 +196,7 @@ def list_files(startpath):
         for f in files:
             print('{}{}'.format(subindent, f))
 
-def get_size(start_path = '.'):
+def getsize(start_path = '.'):
 	total_size = 0
 	for dirpath, dirnames, filenames in os.walk(start_path):
 		for f in filenames:

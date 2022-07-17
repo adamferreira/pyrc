@@ -71,8 +71,17 @@ def test_script_generator():
         ostype = pysys.OSTYPE.LINUX
     )
 
+def test_upload(remote:'pyrm.RemoteSSHFileSystem'):
+    local = pysys.LocalFileSystem()
+    #file = local.abspath(__file__)
+    file = "C:\\Users\\adamf\\Projects\\sample.txt"
+    remote.upload(file, "~/")
+
 
 if __name__ == '__main__':
     #test_script_generator()
     #test_fs(pysys.LocalFileSystem(), currentdir())
-    test_fs(get_sshdocker(), "/home/aferreira")
+
+
+    #test_fs(get_sshdocker(), "/home/aferreira")
+    test_upload(get_sshdocker())
