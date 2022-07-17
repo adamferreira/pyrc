@@ -181,11 +181,7 @@ class RemoteSSHFileSystem(FileSystemCommand):
 
 	# --------------------------------------------------
 	def __upload_files(self, from_paths:'list[str]', to_path:str, from_fs:FileSystem):
-		"""
-		Args:
-			local_paths (List[str]): Absolute file paths
-			remote_path (str): Absolute remote path
-		"""
+		# from_paths are assumed to all be files here 
 		# Setp event and connection
 		self.__filesupload_event.begin(
 			files = from_paths,
@@ -199,24 +195,19 @@ class RemoteSSHFileSystem(FileSystemCommand):
 		self.__filesupload_event.end()
 		scp.close()
 	
-	def __upload_node(self, localnode:FileSystemTree, remote_path:str):
-		"""
+	def __upload_node(self, localnode:FileSystemTree, to_path:str):
+		if self.remote_file_exists(to_path):
+			self.rm(to_path)
+		self.mkdir(to_path, exist_ok=True)
 
-		Args:
-			localnode (FileSystemTree): [description]
-			remote_path (str): [description]
-		"""
-		if self.remote_file_exists(remote_path):
-			self.rm(remote_path)
-		self.mkdir(remote_path, exist_ok=True)
-
-		self.dirupload_event.begin(localnode.realpath(), remote_path)
-		self.__upload_files(local_paths=localnode.realfiles(), remote_path=remote_path)
+		self.dirupload_event.begin(localnode.realpath(), to_path)
+		self.__upload_files(local_paths=localnode.realfiles(), remote_path=to_path)
 		self.dirupload_event.end()
 
-	def __upload_tree(self, localtree:FileSystemTree, remote_path:str):
-		for n in localtree.nodes():
-			self.__upload_node(localnode = n, remote_path = self.join(remote_path, n.relpath()))
+	def __upload_dir(self, from_path:str, to_path:str, from_fs:FileSystem):
+		tree:FileSystemTree = from_fs.lsdir(from_path)
+		for node in tree.nodes():
+			self.__upload_node(localnode = node, to_path = self.join(to_path, node.relpath()))
 			
 
 	def upload(self, from_path:str, to_path:str, from_fs:FileSystem = None, compress:bool = False):
