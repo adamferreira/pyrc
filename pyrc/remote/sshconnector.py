@@ -78,6 +78,7 @@ class RemoteSSHFileSystem(FileSystemCommand):
 
 		# Creating remote connection
 		self._sshcon = paramiko.SSHClient()  # will create the object
+		self._scp = None # set in 'open()'
 		# Setting up proxy
 		self._sshcon.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # no known_hosts error
 
