@@ -6,7 +6,7 @@ def get_ssh_configurations(user_config_file:str) -> 'dict[str:dict[str:str]]':
     ssh_config = paramiko.SSHConfig.from_path(user_config_file)
     return {hostname : ssh_config.lookup(hostname) for hostname in ssh_config.get_hostnames()}
 
-def create_connectors(user_config_file:str, sshkey:str=None) -> 'dict[str:RemoteSSHFileSystem]':
+def create_sshconnectors(user_config_file:str, sshkey:str=None) -> 'dict[str:RemoteSSHFileSystem]':
     path = LocalFileSystem()
     # Exception if file does not exist
     ssh_configs = get_ssh_configurations(user_config_file)
@@ -22,17 +22,20 @@ def create_connectors(user_config_file:str, sshkey:str=None) -> 'dict[str:Remote
         
         # Creating user config dictionnary
         user_config = ssh_configs[hostname]
-        connectors[hostname] = RemoteSSHFileSystem(
-            username = user_config["user"],
-            hostname = user_config["hostname"],
-            key_filename = sshkey,
-            port = user_config["port"] if "port" in user_config else 22,
-            proxycommand = user_config["proxycommand"] if "proxycommand" in user_config else None,
-            askpwd = False
-        )
+        sshfilesystem_args = {
+            "username": user_config["user"],
+            "hostname" : user_config["hostname"],
+            "key_filename" : sshkey,
+            "port" : user_config["port"] if "port" in user_config else 22,
+            "askpwd" : False
+        }
+        if "proxycommand" in user_config:
+            sshfilesystem_args["proxycommand"] = user_config["proxycommand"]
+
+        connectors[hostname] = RemoteSSHFileSystem(**sshfilesystem_args)
     return connectors
 
-def create_default_connectors()  -> 'dict[str:RemoteSSHFileSystem]':
+def create_default_sshconnectors()  -> 'dict[str:RemoteSSHFileSystem]':
     path = LocalFileSystem()
     platform = path.platform()
     if path.is_unix():
@@ -43,7 +46,7 @@ def create_default_connectors()  -> 'dict[str:RemoteSSHFileSystem]':
     else:
         ssh_config_file = path.join("C:\\", "Users", path.env("USER"), ".ssh", "config")
 
-    return create_connectors(ssh_config_file, sshkey=None)
+    return create_sshconnectors(ssh_config_file, sshkey=None)
 
 class RemotePyrc(object):
 	def __init__(self, remote:RemoteSSHFileSystem, python_remote_install:str = None):
