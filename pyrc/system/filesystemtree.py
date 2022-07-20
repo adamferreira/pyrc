@@ -78,7 +78,14 @@ class FileSystemTree(object):
 		return self.path.join(*[n.basename() for n in ancestors])
 
 	def basename(self):
-		return self.path.basename(self.realpath())
+		return self.path.basename(self.root)
+
+	def relative_to_root(self) -> str:
+		"""
+		get relative path from root
+		"""
+		root = self.rootnode()
+		return self.path.relative_to(self.realpath(), root.realpath())
 
 	def ancestors(self) -> 'list[FileSystemTree]':
 		ancestors = []

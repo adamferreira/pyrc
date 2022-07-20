@@ -149,6 +149,10 @@ class RemoteSSHFileSystem(FileSystemCommand):
 	# ------------------------
 
 	#@overrides
+	def name(self) -> str:
+		return f"{self.user}@{self.hostname}"
+
+	#@overrides
 	def exec_command(self, cmd:str, cwd:str = "", environment:dict = None, event:pyevent.Event = None):
 		environment = {} if environment is None else dict(environment)
 		environment.update(self.environ)
@@ -196,19 +200,28 @@ class RemoteSSHFileSystem(FileSystemCommand):
 		self.__filesupload_event.end()
 		scp.close()
 	
-	def __upload_node(self, localnode:FileSystemTree, to_path:str):
-		if self.remote_file_exists(to_path):
-			self.rm(to_path)
-		self.mkdir(to_path, exist_ok=True)
+	def __upload_node(self, node:FileSystemTree, to_path:str, from_fs:FileSystem):
+		# Recreate remote folder
+		if self.isdir(to_path):
+			self.rmdir(to_path, recur = True)
+		self.mkdir(to_path, exist_ok = True)
 
-		self.dirupload_event.begin(localnode.realpath(), to_path)
-		self.__upload_files(local_paths=localnode.realfiles(), remote_path=to_path)
-		self.dirupload_event.end()
+		self.__dirupload_event.begin(node.realpath(), to_path)
+		self.__upload_files(from_paths=node.realfiles(), to_path=to_path, from_fs=from_fs)
+		self.__dirupload_event.end()
 
 	def __upload_dir(self, from_path:str, to_path:str, from_fs:FileSystem):
+		todir = self.join(to_path, from_fs.basename(from_path))
+		# Recreate remote root directory
+		if self.isdir(todir):
+			self.rmdir(todir, recur = True)
+		self.mkdir(todir, exist_ok = True)
+
+		# from_path is assumed to be a dir here
 		tree:FileSystemTree = from_fs.lsdir(from_path)
 		for node in tree.nodes():
-			self.__upload_node(localnode = node, to_path = self.join(to_path, node.relpath()))
+			tosubdir = self.convert(self.join(todir, node.relative_to_root()))
+			self.__upload_node(node = node, to_path = tosubdir, from_fs = from_fs)
 			
 
 	def upload(self, from_path:str, to_path:str, from_fs:FileSystem = None, compress:bool = False):
@@ -234,7 +247,7 @@ class RemoteSSHFileSystem(FileSystemCommand):
 		if from_fs.isfile(from_path):
 			self.__upload_files([from_path], to_path, from_fs)
 		elif from_fs.isdir(from_path):
-			return NotImplemented
+			self.__upload_dir(from_path, to_path, from_fs)
 		else:
 			raise RuntimeError(f"Path {from_path} is not a valid path")
 

@@ -306,15 +306,15 @@ class RichRemoteDirUploadEvent(FileTransferEvent):
         super().__init__(caller)
 
     def begin(self, *args, **kwargs):
-        __local_dir = args[0]
-        __remote_dir = args[1]
-        rich.print(f"Uploading directory {__local_dir} to {self.caller.user}@{self.caller.hostname}:{__remote_dir}")
+        __fromdir = args[0]
+        __todir = args[1]
+        rich.print(f"Uploading directory {__fromdir} to {self.caller.name()}:{__todir}")
 
 class RichRemoteDirDownloadEvent(FileTransferEvent):
     def __init__(self, caller, *args, **kwargs):
         super().__init__(caller)
 
     def begin(self, *args, **kwargs):
-        __local_dir = args[0]
-        __remote_dir = args[1]
-        rich.print(f"Downloading directory {self.caller.user}@{self.caller.hostname}:{__remote_dir} to {__local_dir}")
+        __fromdir = args[0]
+        __todir = args[1]
+        rich.print(f"Downloading directory {__fromdir} to {self.caller.name()}:{__todir}")

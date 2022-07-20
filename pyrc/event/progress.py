@@ -36,12 +36,6 @@ class FileTransferTask():
 	def status(self) -> TaskStatus:
 		return self.__status
 
-	def prettyname(self) -> str:
-		if type(self.__to_fs).__name__ ==  'RemoteSSHFileSystem':
-			return f"{self.__to_fs.user}@{self.__to_fs.hostname}"
-		else:
-			return str(type(self.__to_fs).__name__)
-
 	def __init__(self,
 			layout,
 			file:str,
@@ -57,7 +51,7 @@ class FileTransferTask():
 			description = "[red]Downloading...", 
 			filename = self.__from_fs.basename(self.__file), 
 			start = False, 
-			prettyname = self.prettyname()
+			prettyname = self.__to_fs.name()
 		)
 		# Get file name from system that send the file
 		self.__layout.update(self.__taskid, total = self.__from_fs.getsize(file))
@@ -144,13 +138,13 @@ class RemoteFileTransfer():
 # TODO rework
 class DirectoryTransferProgress():
 	def __init__(self, dir:str, files:'list[str]', user:str, hostname:str):
-		self.__overallprogress = Progress(
-			SpinnerColumn(),
-			TextColumn("[bold blue]{task.fields[filename]}", justify="left"),
-			BarColumn(),
-			"[progress.percentage]{task.percentage:>3.1f}%",
-			"•",
-			TextColumn("[bold green]{task.fields[user]}@{task.fields[hostname]}"))
+		#self.__overallprogress = Progress(
+		#	SpinnerColumn(),
+		#	TextColumn("[bold blue]{task.fields[filename]}", justify="left"),
+		#	BarColumn(),
+		#	"[progress.percentage]{task.percentage:>3.1f}%",
+		#	"•",
+		#	TextColumn("[bold green]{task.fields[user]}@{task.fields[hostname]}"))
 
 		self.__filesprogress = RemoteFileTransfer(files, self.caller.user, self.caller.hostname, filetransferedcb=self.__file_transfered)
 

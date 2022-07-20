@@ -75,7 +75,8 @@ def test_upload(remote:'pyrm.RemoteSSHFileSystem'):
     local = pysys.LocalFileSystem()
     #file = local.abspath(__file__)
     file = "C:\\Users\\adamf\\Projects\\sample.txt"
-    remote.upload(file, "~/")
+    #remote.upload(file, "~/")
+    remote.upload("C:\\Users\\adamf\\Projects\\pyrc\\pyrc", "~/")
 
 
 if __name__ == '__main__':
@@ -83,5 +84,5 @@ if __name__ == '__main__':
     #test_fs(pysys.LocalFileSystem(), currentdir())
 
 
-    test_fs(get_sshdocker(), "/home/aferreira")
+    #test_fs(get_sshdocker(), "/home/aferreira")
     test_upload(get_sshdocker())

@@ -93,9 +93,25 @@ class FileSystem:
 	def ext(self, path:str) -> str:
 		return str(type(self.__path)(path).suffix)
 
+	def convert(self, path:str) -> str:
+		"""
+		Convert given path tu current path type (Posix or Windows)
+		"""
+		return str(type(self.__path)(path))
+
+	def relative_to(self, path:str, other:str) -> str:
+		"""
+		Compute a version of this path relative to the path represented by other. 
+		If it’s impossible, ValueError is raised
+		"""
+		return str(type(self.__path)(path).relative_to(other))
+
 	# ------------------------
 	#		To Override
 	# ------------------------
+
+	def name(self) -> str:
+		return str(type(self).__name__)
 
 	def realpath(self, path:str) -> str:
 		"""

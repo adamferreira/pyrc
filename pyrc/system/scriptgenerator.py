@@ -35,6 +35,10 @@ class ScriptGenerator(FileSystemCommand):
 			self.script.close()
 
 	#@overrides
+	def name(self) -> str:
+		return self.script.name if self.script is not None else ""
+
+	#@overrides
 	def exec_command(self, cmd:str, cwd:str = "", environment:dict = None, event = None):
 		if environment is not None:
 			# Do not reprint envs var is its the same than last call
