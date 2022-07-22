@@ -76,7 +76,9 @@ def test_upload(remote:'pyrm.RemoteSSHFileSystem'):
     #file = local.abspath(__file__)
     file = "C:\\Users\\adamf\\Projects\\sample.txt"
     #remote.upload(file, "~/")
+
     remote.upload("C:\\Users\\adamf\\Projects\\pyrc\\pyrc", "~/")
+    remote.download("~/toto.txt", "C:\\Users\\adamf\\Projects\\pyrc\\toto")
 
 
 if __name__ == '__main__':

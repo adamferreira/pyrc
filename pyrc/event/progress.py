@@ -51,7 +51,8 @@ class FileTransferTask():
 			description = "[red]Downloading...", 
 			filename = self.__from_fs.basename(self.__file), 
 			start = False, 
-			prettyname = self.__to_fs.name()
+			fromprettyname = self.__from_fs.name(),
+			toprettyname = self.__to_fs.name()
 		)
 		# Get file name from system that send the file
 		self.__layout.update(self.__taskid, total = self.__from_fs.getsize(file))
@@ -75,7 +76,7 @@ class FileTransferTask():
 		"""
 
 	# Paramiko's scp like callback
-	def file_progress(self, filename:str, size:float, sent:float):
+	def file_progress(self, size:float, sent:float):
 		self.__layout.update(self.__taskid, completed=sent)
 		if sent == size:
 			self.end()
@@ -96,7 +97,10 @@ class RemoteFileTransfer():
 					"•",
 					TimeRemainingColumn(),
 					"•",
-					TextColumn("[bold green]{task.fields[prettyname]}"))
+					TextColumn("[bold green]{task.fields[fromprettyname]}"),
+					"→",
+					TextColumn("[bold green]{task.fields[toprettyname]}")
+				)
 
 	def __init__(self, files:'list[str]', from_fs:'FileSystem', to_fs:'FileSystem'):
 		self.__richfileprogress = RemoteFileTransfer.getLayout()
@@ -133,7 +137,10 @@ class RemoteFileTransfer():
 
 	# Paramiko's scp like callback
 	def file_progress(self, filename:str, size:float, sent:float):
-		self.__tasks[filename.decode("utf-8")].file_progress(filename, size, sent)
+		if type(filename) != str:
+			filename = filename.decode("utf-8")
+
+		self.__tasks[self.__to_fs.basename(filename)].file_progress(size, sent)
 
 # TODO rework
 class DirectoryTransferProgress():
