@@ -304,7 +304,7 @@ class FileSystem:
 		if self.isfile(path):
 			return (path.replace(self.ext(path), ".zip")) if archive_path is None else (archive_path + ".zip")
 
-	def unzip(self, archive_path:str, to_path:str = None, flag:str = "") -> None:
+	def unzip(self, archive_path:str, to_path:str = None, flag:str = "") -> str:
 		if not self.ext(archive_path) == ".zip":
 			raise RuntimeError(f"Cannot unzip format {self.ext(archive_path)}")
 			

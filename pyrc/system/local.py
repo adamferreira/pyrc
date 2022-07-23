@@ -132,6 +132,13 @@ class LocalFileSystem(FileSystem):
 		return archive_path
 
 	#@overrides
+	def unzip(self, archive_path:str, to_path:str = None, flag:str = "") -> str:
+		import shutil
+		folder_path = FileSystem.unzip(self, archive_path, to_path)
+		shutil.unpack_archive(filename = archive_path, extract_dir = folder_path)
+		return folder_path
+
+	#@overrides
 	def getsize(self, path) -> int:
 		if self.isfile(path):
 			return os.path.getsize(path)

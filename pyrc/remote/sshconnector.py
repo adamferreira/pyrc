@@ -227,12 +227,6 @@ class RemoteSSHFileSystem(FileSystemCommand):
 		# Setting up proxy
 		self._sshcon.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # no known_hosts error
 
-		# Events
-		self.__filesupload_event = pyevent.RichRemoteFileTransferEvent(self)
-		self.__dirupload_event = pyevent.RichRemoteDirUploadEvent(self)
-		self.__filesdownload_event = pyevent.RichRemoteFileTransferEvent(self)
-		self.__dirdownload_event = pyevent.RichRemoteDirDownloadEvent(self)
-
 		# Will be set later
 		self.environ = {}
 		

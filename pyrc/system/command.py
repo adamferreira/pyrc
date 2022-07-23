@@ -163,7 +163,13 @@ class FileSystemCommand(FileSystem):
 	def zip(self, path:str, archive_path:str = None, flag:str = "") -> str:
 		archive_path = FileSystem.zip(self, path, archive_path)
 		if self.is_unix():
-			self.check_output(f"zip {flag} {archive_path} {path}")
+			# Change working directory to not have full dir tree in the archive
+			# Move to folder to compress and compress all files there
+			self.exec_command(
+				cmd = f"zip -r {flag} {archive_path} *",
+				cwd = path,
+				event = pyevent.ErrorRaiseEvent()
+			)
 			return archive_path
 		else:
 			return NotImplemented
@@ -172,7 +178,7 @@ class FileSystemCommand(FileSystem):
 	def unzip(self, archive_path:str, to_path:str = None, flag:str = "") -> None:
 		folder_path = FileSystem.unzip(self, archive_path, to_path)
 		if self.is_unix():
-			print(self.exec_command(f"unzip {flag} {archive_path} -d {folder_path}", event=pyevent.ErrorRaiseEvent()))
+			self.exec_command(f"unzip {flag} {archive_path} -d {folder_path}", event=pyevent.ErrorRaiseEvent())
 			return folder_path
 		else:
 			return NotImplemented

@@ -78,9 +78,9 @@ def test_upload(remote:'pyrm.RemoteSSHFileSystem'):
     file = "C:\\Users\\adamf\\Projects\\sample.txt"
     #remote.upload(file, "~/")
 
-    remote.upload("C:\\Users\\adamf\\Projects\\pyrc\\pyrc", "~/", compress_before = True, uncompress_after = True)
-    #remote.download("~/toto.txt", "C:\\Users\\adamf\\Projects\\pyrc\\toto")
-    #remote.download("~/pyrc", "C:\\Users\\adamf\\Projects\\pyrc\\toto")
+    #remote.upload("C:\\Users\\adamf\\Projects\\pyrc\\pyrc", "~/", compress_before = True, uncompress_after = True)
+    remote.download("~/toto.txt", "C:\\Users\\adamf\\Projects\\pyrc\\toto", compress_before = True, uncompress_after = True)
+    #remote.download("~/pyrc", "C:\\Users\\adamf\\Projects\\pyrc\\toto", compress_before = True, uncompress_after = True)
 
 
 if __name__ == '__main__':
