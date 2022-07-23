@@ -160,18 +160,20 @@ class FileSystemCommand(FileSystem):
 			self.exec_command(f"call > {path}", event=pyevent.ErrorRaiseEvent())
 
 	#@overrides
-	def zip(self, path:str, archivename:str = None, flag:str = "") -> None:
-		archivename = FileSystem.zip(self, path, archivename)
+	def zip(self, path:str, archive_path:str = None, flag:str = "") -> str:
+		archive_path = FileSystem.zip(self, path, archive_path)
 		if self.is_unix():
-			return self.exec_command(f"zip {flag} \"{archivename}\" \"{path}\"", event=pyevent.ErrorRaiseEvent())
+			self.check_output(f"zip {flag} {archive_path} {path}")
+			return archive_path
 		else:
 			return NotImplemented
 
 	#@overrides
-	def unzip(self, path:str, archivename:str = None, flag:str = "") -> None:
-		archivename = FileSystem.zip(self, path, archivename)
+	def unzip(self, archive_path:str, to_path:str = None, flag:str = "") -> None:
+		folder_path = FileSystem.unzip(self, archive_path, to_path)
 		if self.is_unix():
-			return self.exec_command(f"unzip {flag} \"{archivename}\" -d \"{path}\"", event=pyevent.ErrorRaiseEvent())
+			print(self.exec_command(f"unzip {flag} {archive_path} -d {folder_path}", event=pyevent.ErrorRaiseEvent()))
+			return folder_path
 		else:
 			return NotImplemented
 

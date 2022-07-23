@@ -118,8 +118,28 @@ def transfer(
 		from_fs (FileSystem): Filesystem to transfert from
 		to_fs (FileSystem): Filesystem to transfert to
 		compress_before (bool, optional): Compress the file or folder in 'from_fs' before transfer to 'to_fs'. Defaults to False.
-		uncompress_after (bool, optional): . Uncompress the file or folder in 'to_fs' after transfer. Defaults to False.
+		uncompress_after (bool, optional): Uncompress the file or folder in 'to_fs' after transfer. Defaults to False.
 	"""
+
+	if compress_before:
+		# Compress file or folder in 'from_fs'
+		archivename_from= from_fs.zip(path = from_path)
+		# transfer it as a file
+		transfer_files([archivename_from], to_path, from_fs, to_fs)
+		# Remove archive created in 'from_fs'
+		from_fs.unlink(archivename_from)
+		
+		if uncompress_after:
+			# Get archive name is destination 'to_fs' filesystem
+			archivename_to = to_fs.join(to_path, from_fs.basename(archivename_from))
+			print(archivename_to)
+			# Uncompress transfered archive in 'to_fs' filesystem
+			to_fs.unzip(archivename_to)
+			# Remove transfered archive from 'to_fs' filesystem
+			to_fs.unlink(archivename_to)
+		return
+
+	# Default transfert case
 	if from_fs.isfile(from_path):
 		transfer_files([from_path], to_path, from_fs, to_fs)
 	elif from_fs.isdir(from_path):
@@ -313,7 +333,7 @@ class RemoteSSHFileSystem(FileSystemCommand):
 			from_dirpath (str): Path of file or directory locally 
 			to_dirpath (str): Path to a directory in the remote filesystem
 			compress_before (bool, optional): Compress the file or folder locally before transfert. Defaults to False.
-			uncompress_after (bool, optional): . Uncompress the file or folder in remote machine after transfer. Defaults to False.
+			uncompress_after (bool, optional): Uncompress the file or folder in remote machine after transfer. Defaults to False.
 		"""
 		transfer(
 			from_path = from_path,
@@ -332,7 +352,7 @@ class RemoteSSHFileSystem(FileSystemCommand):
 			from_dirpath (str): Path of file or directory in the remote filesystem
 			to_dirpath (str): Path to a local directory 
 			compress_before (bool, optional): Compress the file or folder remotly before transfert. Defaults to False.
-			uncompress_after (bool, optional): . Uncompress the file or folder locally after transfer. Defaults to False.
+			uncompress_after (bool, optional): Uncompress the file or folder locally after transfer. Defaults to False.
 		"""
 		transfer(
 			from_path = from_path,

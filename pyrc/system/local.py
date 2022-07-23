@@ -124,10 +124,12 @@ class LocalFileSystem(FileSystem):
 		f.close()
 
 	#@overrides
-	def zip(self, path:str, archivename:str = None, flag:str = "") -> None:
+	def zip(self, path:str, archive_path:str = None, flag:str = "") -> str:
 		import shutil
-		FileSystem.zip(self, path, archivename)
-		shutil.make_archive(archivename, 'zip', path)
+		archive_path = FileSystem.zip(self, path, archive_path, flag)
+		# Remove .zip extension when using shutil
+		shutil.make_archive(archive_path.replace(self.ext(archive_path), ""), 'zip', path)
+		return archive_path
 
 	#@overrides
 	def getsize(self, path) -> int:

@@ -294,14 +294,28 @@ class FileSystem:
 		"""
 		return NotImplemented
 
-	def zip(self, path:str, archivename:str = None, flag:str = "") -> None:
+	def zip(self, path:str, archive_path:str = None, flag:str = "") -> str:
 		if (not self.isdir(path)) and (not self.isfile(path)):
 			raise RuntimeError(f"Path {path} is not a file or directory.")
 
-		return (path.replace(self.ext(path), ".zip")) if archivename is None else (archivename + ".zip")
+		if self.isdir(path):
+			return path + ".zip" if archive_path is None else (archive_path + ".zip") 
 
-	def unzip(self, path:str, archivename:str = None, flag:str = "") -> None:
-		return NotImplemented
+		if self.isfile(path):
+			return (path.replace(self.ext(path), ".zip")) if archive_path is None else (archive_path + ".zip")
+
+	def unzip(self, archive_path:str, to_path:str = None, flag:str = "") -> None:
+		if not self.ext(archive_path) == ".zip":
+			raise RuntimeError(f"Cannot unzip format {self.ext(archive_path)}")
+			
+		if to_path is not None and not self.isdir(to_path):
+			raise RuntimeError(f"Path {to_path} is not a valid directory")
+		
+		if to_path is None:
+			return archive_path.replace(self.ext(archive_path), "")
+
+		return to_path
+
 
 	def getsize(self, path) -> int:
 		"""
