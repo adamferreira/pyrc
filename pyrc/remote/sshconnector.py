@@ -1,3 +1,4 @@
+from charset_normalizer import from_path
 import paramiko
 import getpass
 from scp import SCPClient, SCPException
@@ -6,6 +7,101 @@ from pyrc.system.command import FileSystemCommand
 from pyrc.system.filesystemtree import FileSystemTree
 from pyrc.system.filesystem import OSTYPE, FileSystem
 from pyrc.system.local import LocalFileSystem
+
+
+def transfer_files(from_paths:'list[str]', to_path:str, from_fs:FileSystem, to_fs:FileSystem):
+	"""
+	Transfert FILES from one filesystem to a directory in another one
+	Args:
+		from_paths (list[str]): List of files to be transfered from 
+		'from_fs' filesystem to 'to_fs' filesystem.
+		Le list must represent files that exists in filesystel 'from_fs'
+		to_path (str): Path to a directory in filesystem 'to_fs'
+		from_fs (FileSystem): Filesystem to transfert from
+		to_fs (FileSystem): Filesystem to transfert to
+	"""
+
+	# Format path according to their filesystems
+	from_paths = [from_fs.abspath(from_path) for from_path in from_paths]
+	to_path = to_fs.abspath(to_path)
+
+	transferevent = pyevent.RichRemoteFileTransferEvent(caller = None)
+	transferevent.begin(
+		files = from_paths,
+		from_fs = from_fs,
+		to_fs = to_fs
+	)
+	# if type(to_fs) == SSH and type(from_fs) == local -> scp.put ; type(from_fs) == SSH and type(to_fs) == local -> scp.get
+	# else : not implemented
+	scp = None
+	if type(from_fs).__name__ ==  'RemoteSSHFileSystem' and type(to_fs).__name__ ==  'LocalFileSystem':
+		scp = SCPClient(from_fs.sshcon.get_transport(), progress = transferevent.progress)
+		for file in from_paths:
+			# Download file, for some reason scp.get only works with a single file contrary to scp.put
+			scp.get(remote_path = file, recursive = False, local_path = to_path)
+
+	elif type(from_fs).__name__ ==  'LocalFileSystem' and type(to_fs).__name__ ==  'RemoteSSHFileSystem':
+		scp = SCPClient(to_fs.sshcon.get_transport(), progress = transferevent.progress)
+		# Upload files
+		scp.put(files = from_paths, recursive = False, remote_path = to_path)
+	else:
+		raise RuntimeError(f"Transfer between {type(from_fs)} and {type(to_fs)} is not supported.")
+
+	transferevent.end()
+	if scp is not None:
+		scp.close()
+
+
+def transfer_dir(from_dirpath:str, to_dirpath:str, from_fs:FileSystem, to_fs:FileSystem):
+	"""
+	Transfert a DIRECTORY from one filesystem to a directory in another one
+	Args:
+		from_dirpath (str): Directory path in 'from_fs' filesystem
+		to_dirpath (str): Directory path in 'to_fs' filesystem
+		from_fs (FileSystem): Filesystem to transfert from
+		to_fs (FileSystem): Filesystem to transfert to
+	"""
+
+	def transfer_node(node:FileSystemTree, to_dirpath:str, from_fs:FileSystem, to_fs:FileSystem):
+		# Check if the dir already exists in 'to_fs'
+		if to_fs.isdir(to_dirpath):
+			to_fs.rmdir(to_dirpath, recur = True)
+		to_fs.mkdir(to_dirpath, exist_ok = True)
+		# Transfert files in the root of node
+		transfer_files(
+			from_paths = node.realfiles(),
+			to_path = to_dirpath,
+			from_fs = from_fs,
+			to_fs = to_fs
+		)
+
+	# Format path according to their filesystems
+	from_dirpath = from_fs.abspath(from_dirpath)
+	to_dirpath = to_fs.abspath(to_dirpath)
+
+	# Make sure that source and destinations are valid dir paths
+	assert from_fs.isdir(from_dirpath)
+	assert to_fs.isdir(to_dirpath)
+
+	# from_dirpath in 'to_fs'
+	todir = to_fs.join(to_dirpath, from_fs.basename(from_dirpath))
+	# Check if the dir already exists in 'to_fs'
+	if to_fs.isdir(todir):
+		to_fs.rmdir(todir, recur = True)
+	to_fs.mkdir(todir, exist_ok = True)
+
+	# Inpect directory 'from_dirpath' inside 'from_fs'
+	from_tree:FileSystemTree = from_fs.lsdir(from_dirpath)
+	for node in from_tree.nodes():
+		# Get node root dir path in destination filesystem
+		node_fromdir = to_fs.convert(to_fs.join(todir, node.relative_to_root()))
+		print("node_fromdir", node_fromdir)
+		transfer_node(
+			node = node,
+			to_dirpath = node_fromdir,
+			from_fs = from_fs,
+			to_fs = to_fs
+		)
 
 # ------------------ RemoteSSHFileSystem
 class RemoteSSHFileSystem(FileSystemCommand):
@@ -33,6 +129,10 @@ class RemoteSSHFileSystem(FileSystemCommand):
 	@property
 	def askpwd(self) -> bool:
 		return self._kwargs["askpwd"]
+
+	@property
+	def sshcon(self) -> paramiko.SSHClient:
+		return self._sshcon
 
 	#@overrides
 	def is_unix(self) -> bool:
@@ -180,7 +280,6 @@ class RemoteSSHFileSystem(FileSystemCommand):
 		output = self.check_output("python3 -c \"import platform; print(platform.system()); print(platform.release())\"")
 		return { "system" : output[0], "release" : output[1] }
 
-
 	# --------------------------------------------------
 	def __upload_files(self, from_paths:'list[str]', to_path:str, from_fs:FileSystem):
 		# from_paths are assumed to all be files here 
@@ -221,7 +320,7 @@ class RemoteSSHFileSystem(FileSystemCommand):
 			self.__upload_node(node = node, to_path = tosubdir, from_fs = from_fs)
 			
 
-	def upload(self, from_path:str, to_path:str, from_fs:FileSystem = None, compress:bool = False):
+	def upload2(self, from_path:str, to_path:str, from_fs:FileSystem = None, compress:bool = False):
 		"""
 		Upload the given path (file or folder) to another filesystem.
 		If compress is True, then 'from_path' will be zipped in the 'from_fs' FileSystem, uploaded
@@ -250,34 +349,55 @@ class RemoteSSHFileSystem(FileSystemCommand):
 		else:
 			raise RuntimeError(f"Path {from_path} is not a valid path")
 
-	def __download_files(self, from_paths:'list[str]', to_path:str, to_fs:FileSystem):
-		# from_paths are assumed to all be files here 
-		self.__filesdownload_event.begin(
-			files = from_paths,
-			from_fs = self,
-			to_fs = to_fs
-		)
-		scp = SCPClient(self._sshcon.get_transport(), progress = self.__filesdownload_event.progress)
-		# Download files
-		scp.get(remote_path = from_paths, recursive = False, local_path = to_path)
-		# End event
-		self.__filesdownload_event.end()
-		scp.close()
+	def upload(self, from_path:str, to_path:str, compress:bool = False):
+		from_fs = LocalFileSystem()
+		if from_fs.isfile(from_path):
+			transfer_files(
+				from_paths = [from_path],
+				to_path = to_path,
+				from_fs = from_fs,
+				to_fs = self
+			)
+		elif from_fs.isdir(from_path):
+			transfer_dir(
+				from_dirpath = from_path,
+				to_dirpath = to_path,
+				from_fs = from_fs,
+				to_fs = self
+			)
+		else:
+			raise RuntimeError(f"Path {from_path} is not a valid path")
 
 			
-	def download(self, from_path:str, to_path:str, to_fs:FileSystem = None, compress:bool = False):
+	def download(self, from_path:str, to_path:str, compress:bool = False):
 		# 'to_path' is assumed to be a path in 'to_fs', 'from_path' is assumed to be a path in the ssh remote machine.
-		if to_fs is None:
-			to_fs = LocalFileSystem()
-
-		assert to_fs.isdir(to_path)
-
-		from_path = self.abspath(from_path)
-		to_path = to_fs.abspath(to_path)
+		"""
+		TODO
+		Args:
+			from_path (str): path to retrieve from remote host. since this is
+            evaluated by scp on the remote host, shell wildcards and
+            environment variables may be used.
+			to_path (str): _description_
+			to_fs (FileSystem, optional): _description_. Defaults to None.
+			compress (bool, optional): _description_. Defaults to False.
+		"""
+		to_fs = LocalFileSystem()
 		if self.isfile(from_path):
-			self.__download_files(from_path, to_path, to_fs)
+			transfer_files(
+				from_paths = [from_path],
+				to_path = to_path,
+				from_fs = self,
+				to_fs = to_fs
+			)
+		elif self.isdir(from_path):
+			transfer_dir(
+				from_dirpath = from_path,
+				to_dirpath = to_path,
+				from_fs = self,
+				to_fs = to_fs
+			)
 		else:
-			raise RuntimeError("error")
+			raise RuntimeError(f"Path {from_path} is not a valid path")
 
 
 

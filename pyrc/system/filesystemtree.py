@@ -1,5 +1,3 @@
-from ast import Subscript
-from textwrap import indent
 from pyrc.system.filesystem import FileSystem
 
 class FileSystemTree(object):pass

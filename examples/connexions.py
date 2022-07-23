@@ -79,6 +79,7 @@ def test_upload(remote:'pyrm.RemoteSSHFileSystem'):
 
     remote.upload("C:\\Users\\adamf\\Projects\\pyrc\\pyrc", "~/")
     remote.download("~/toto.txt", "C:\\Users\\adamf\\Projects\\pyrc\\toto")
+    remote.download("~/pyrc", "C:\\Users\\adamf\\Projects\\pyrc\\toto")
 
 
 if __name__ == '__main__':

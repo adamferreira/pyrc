@@ -141,7 +141,7 @@ class RemoteFileTransfer():
 			filename = filename.decode("utf-8")
 
 		self.__tasks[self.__to_fs.basename(filename)].file_progress(size, sent)
-
+"""
 # TODO rework
 class DirectoryTransferProgress():
 	def __init__(self, dir:str, files:'list[str]', user:str, hostname:str):
@@ -160,4 +160,4 @@ class DirectoryTransferProgress():
 
 	def file_progress(self, filename:str, size:float, sent:float):
 		return self.__filesprogress.file_progress_callback(filename, size, sent)
-	
+"""	
