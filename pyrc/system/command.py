@@ -83,7 +83,14 @@ class FileSystemCommand(FileSystem):
 			out, err, status = self.exec_command(cmd = f"realpath {path}", event=pyevent.ErrorRaiseEvent())
 			return out[0]
 		else:
-			return NotImplemented
+			raise RuntimeError("abspath not supported for Windows remote systems")
+
+	#@overrides
+	def realpath(self, path:str) -> str:
+		if self.is_unix():
+			return self.check_output(cmd = f"realpath {path}")[0]
+		else:
+			raise RuntimeError("realpath not supported for Windows remote systems")
 
 	#@overrides
 	def ls(self, path:str)-> 'list[str]':
@@ -101,11 +108,10 @@ class FileSystemCommand(FileSystem):
 		dirs = []
 		files_and_dirs = self.ls(root)
 		for fad in files_and_dirs:
-			if self.isfile(fad):
+			if self.isfile(self.join(root, fad)):
 				files.append(fad)
-			if self.isdir(fad):
+			elif self.isdir(self.join(root, fad)):
 				dirs.append(fad)
-
 		return root, dirs, files
 
 	#@overrides
@@ -125,7 +131,7 @@ class FileSystemCommand(FileSystem):
 	#@overrides
 	def isdir(self, path:str) -> bool:
 		if self.is_unix():
-			out, err, status = self.exec_command(cmd = f"[[ -s {path} ]] && echo \"ok\"", event=pyevent.ErrorRaiseEvent())
+			out, err, status = self.exec_command(cmd = f"[[ -d {path} ]] && echo \"ok\"", event=pyevent.ErrorRaiseEvent())
 			if len(out) == 0: return False
 			else : return "ok" in out[0]
 		else:

@@ -1,3 +1,4 @@
+from genericpath import isdir, isfile
 from charset_normalizer import from_path
 import paramiko
 import getpass
@@ -95,13 +96,29 @@ def transfer_dir(from_dirpath:str, to_dirpath:str, from_fs:FileSystem, to_fs:Fil
 	for node in from_tree.nodes():
 		# Get node root dir path in destination filesystem
 		node_fromdir = to_fs.convert(to_fs.join(todir, node.relative_to_root()))
-		print("node_fromdir", node_fromdir)
 		transfer_node(
 			node = node,
 			to_dirpath = node_fromdir,
 			from_fs = from_fs,
 			to_fs = to_fs
 		)
+
+def transfer(
+	from_path:str, 
+	to_path:str, 
+	from_fs:FileSystem, 
+	to_fs:FileSystem,
+	compress_before:bool = False,
+	uncompress_after:bool = False):
+
+
+	if from_fs.isfile(from_path):
+		transfer_files([from_path], to_path, from_fs, to_fs)
+	elif from_fs.isdir(from_path):
+		transfer_dir(from_path, to_path, from_fs, to_fs)
+	else:
+		raise RuntimeError(f"Path {from_path} is not a valid path")
+	
 
 # ------------------ RemoteSSHFileSystem
 class RemoteSSHFileSystem(FileSystemCommand):
@@ -349,27 +366,18 @@ class RemoteSSHFileSystem(FileSystemCommand):
 		else:
 			raise RuntimeError(f"Path {from_path} is not a valid path")
 
-	def upload(self, from_path:str, to_path:str, compress:bool = False):
-		from_fs = LocalFileSystem()
-		if from_fs.isfile(from_path):
-			transfer_files(
-				from_paths = [from_path],
-				to_path = to_path,
-				from_fs = from_fs,
-				to_fs = self
-			)
-		elif from_fs.isdir(from_path):
-			transfer_dir(
-				from_dirpath = from_path,
-				to_dirpath = to_path,
-				from_fs = from_fs,
-				to_fs = self
-			)
-		else:
-			raise RuntimeError(f"Path {from_path} is not a valid path")
+	def upload(self, from_path:str, to_path:str, compress_before:bool = False, uncompress_after:bool = False):
+		transfer(
+			from_path = from_path,
+			to_path = to_path,
+			from_fs = LocalFileSystem(),
+			to_fs = self,
+			compress_before = compress_before,
+			uncompress_after = uncompress_after
+		)
 
 			
-	def download(self, from_path:str, to_path:str, compress:bool = False):
+	def download(self, from_path:str, to_path:str, compress_before:bool = False, uncompress_after:bool = False):
 		# 'to_path' is assumed to be a path in 'to_fs', 'from_path' is assumed to be a path in the ssh remote machine.
 		"""
 		TODO
@@ -381,23 +389,14 @@ class RemoteSSHFileSystem(FileSystemCommand):
 			to_fs (FileSystem, optional): _description_. Defaults to None.
 			compress (bool, optional): _description_. Defaults to False.
 		"""
-		to_fs = LocalFileSystem()
-		if self.isfile(from_path):
-			transfer_files(
-				from_paths = [from_path],
-				to_path = to_path,
-				from_fs = self,
-				to_fs = to_fs
-			)
-		elif self.isdir(from_path):
-			transfer_dir(
-				from_dirpath = from_path,
-				to_dirpath = to_path,
-				from_fs = self,
-				to_fs = to_fs
-			)
-		else:
-			raise RuntimeError(f"Path {from_path} is not a valid path")
+		transfer(
+			from_path = from_path,
+			to_path = to_path,
+			from_fs = self,
+			to_fs = LocalFileSystem(),
+			compress_before = compress_before,
+			uncompress_after = uncompress_after
+		)
 
 
 
