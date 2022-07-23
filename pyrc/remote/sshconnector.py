@@ -110,8 +110,16 @@ def transfer(
 	to_fs:FileSystem,
 	compress_before:bool = False,
 	uncompress_after:bool = False):
-
-
+	"""
+	Transfert a file or directory from one filesystem to a directory in another one
+	Args:
+		from_path (str): Path in 'from_fs' filesystem
+		to_path (str): Path in 'to_fs' filesystem
+		from_fs (FileSystem): Filesystem to transfert from
+		to_fs (FileSystem): Filesystem to transfert to
+		compress_before (bool, optional): Compress the file or folder in 'from_fs' before transfer to 'to_fs'. Defaults to False.
+		uncompress_after (bool, optional): . Uncompress the file or folder in 'to_fs' after transfer. Defaults to False.
+	"""
 	if from_fs.isfile(from_path):
 		transfer_files([from_path], to_path, from_fs, to_fs)
 	elif from_fs.isdir(from_path):
@@ -298,75 +306,15 @@ class RemoteSSHFileSystem(FileSystemCommand):
 		return { "system" : output[0], "release" : output[1] }
 
 	# --------------------------------------------------
-	def __upload_files(self, from_paths:'list[str]', to_path:str, from_fs:FileSystem):
-		# from_paths are assumed to all be files here 
-		# Setp event and connection
-		self.__filesupload_event.begin(
-			files = from_paths,
-			from_fs = from_fs,
-			to_fs = self
-		)
-		scp = SCPClient(self._sshcon.get_transport(), progress = self.__filesupload_event.progress)
-		# Upload files
-		scp.put(files = from_paths, recursive = False, remote_path = to_path)
-		# End event
-		self.__filesupload_event.end()
-		scp.close()
-	
-	def __upload_node(self, node:FileSystemTree, to_path:str, from_fs:FileSystem):
-		# Recreate remote folder
-		if self.isdir(to_path):
-			self.rmdir(to_path, recur = True)
-		self.mkdir(to_path, exist_ok = True)
-
-		self.__dirupload_event.begin(node.realpath(), to_path)
-		self.__upload_files(from_paths=node.realfiles(), to_path=to_path, from_fs=from_fs)
-		self.__dirupload_event.end()
-
-	def __upload_dir(self, from_path:str, to_path:str, from_fs:FileSystem):
-		todir = self.join(to_path, from_fs.basename(from_path))
-		# Recreate remote root directory
-		if self.isdir(todir):
-			self.rmdir(todir, recur = True)
-		self.mkdir(todir, exist_ok = True)
-
-		# from_path is assumed to be a dir here
-		tree:FileSystemTree = from_fs.lsdir(from_path)
-		for node in tree.nodes():
-			tosubdir = self.convert(self.join(todir, node.relative_to_root()))
-			self.__upload_node(node = node, to_path = tosubdir, from_fs = from_fs)
-			
-
-	def upload2(self, from_path:str, to_path:str, from_fs:FileSystem = None, compress:bool = False):
-		"""
-		Upload the given path (file or folder) to another filesystem.
-		If compress is True, then 'from_path' will be zipped in the 'from_fs' FileSystem, uploaded
-		and unzipped in this FileSystem. Both archives are remove from said FileSystems.
-		'from_path' is assumed to be a path in 'from_fs', 'to_path' is assumed to be a path in the ssh remote machine.
-		Args:
-			from_path (str): File or Folder path in the given 'from_fs' FileSystem
-			to_path (str): Folder path is this FileSystem
-			from_fs (FileSystem, optional): FileSystem to upload 'from_path' to (default LocalFileSystem).
-			compress (bool, optional): Upload the path as a zip archive.
-
-		"""
-		# self is ssh remote machine, from_fs is mostly local filesystem
-		assert self.isdir(to_path)
-
-		if from_fs is None:
-			from_fs = LocalFileSystem()
-
-		from_path = from_fs.abspath(from_path)
-		to_path = self.abspath(to_path)
-		
-		if from_fs.isfile(from_path):
-			self.__upload_files([from_path], to_path, from_fs)
-		elif from_fs.isdir(from_path):
-			self.__upload_dir(from_path, to_path, from_fs)
-		else:
-			raise RuntimeError(f"Path {from_path} is not a valid path")
-
 	def upload(self, from_path:str, to_path:str, compress_before:bool = False, uncompress_after:bool = False):
+		"""
+		Upload a file or directory from local filesystem to the remote filesystem through SSH
+		Args:
+			from_dirpath (str): Path of file or directory locally 
+			to_dirpath (str): Path to a directory in the remote filesystem
+			compress_before (bool, optional): Compress the file or folder locally before transfert. Defaults to False.
+			uncompress_after (bool, optional): . Uncompress the file or folder in remote machine after transfer. Defaults to False.
+		"""
 		transfer(
 			from_path = from_path,
 			to_path = to_path,
@@ -378,16 +326,13 @@ class RemoteSSHFileSystem(FileSystemCommand):
 
 			
 	def download(self, from_path:str, to_path:str, compress_before:bool = False, uncompress_after:bool = False):
-		# 'to_path' is assumed to be a path in 'to_fs', 'from_path' is assumed to be a path in the ssh remote machine.
 		"""
-		TODO
+		Download a file or directory from remote filesystem through SSH to the local filesystem
 		Args:
-			from_path (str): path to retrieve from remote host. since this is
-            evaluated by scp on the remote host, shell wildcards and
-            environment variables may be used.
-			to_path (str): _description_
-			to_fs (FileSystem, optional): _description_. Defaults to None.
-			compress (bool, optional): _description_. Defaults to False.
+			from_dirpath (str): Path of file or directory in the remote filesystem
+			to_dirpath (str): Path to a local directory 
+			compress_before (bool, optional): Compress the file or folder remotly before transfert. Defaults to False.
+			uncompress_after (bool, optional): . Uncompress the file or folder locally after transfer. Defaults to False.
 		"""
 		transfer(
 			from_path = from_path,
