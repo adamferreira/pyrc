@@ -120,7 +120,6 @@ def transfer(
 		compress_before (bool, optional): Compress the file or folder in 'from_fs' before transfer to 'to_fs'. Defaults to False.
 		uncompress_after (bool, optional): Uncompress the file or folder in 'to_fs' after transfer. Defaults to False.
 	"""
-
 	if compress_before:
 		# Compress file or folder in 'from_fs'
 		archivename_from= from_fs.zip(path = from_path)
@@ -132,7 +131,6 @@ def transfer(
 		if uncompress_after:
 			# Get archive name is destination 'to_fs' filesystem
 			archivename_to = to_fs.join(to_path, from_fs.basename(archivename_from))
-			print(archivename_to)
 			# Uncompress transfered archive in 'to_fs' filesystem
 			to_fs.unzip(archivename_to)
 			# Remove transfered archive from 'to_fs' filesystem

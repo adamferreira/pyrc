@@ -1,3 +1,4 @@
+from genericpath import isdir
 import os, platform
 from pathlib import Path, PosixPath, WindowsPath
 try:
@@ -142,8 +143,10 @@ class LocalFileSystem(FileSystem):
 	def getsize(self, path) -> int:
 		if self.isfile(path):
 			return os.path.getsize(path)
-		
-		# TODO !!!! FileSystemTree
+		elif self.isdir(path):
+			return FileSystemTree.get_tree(self, path).getsize()
+		else:
+			return 0
 
 	#@overrides
 	def env(self, var:str) -> str:

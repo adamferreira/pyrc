@@ -3,6 +3,7 @@ import pyrc
 import pyrc.remote as pyrm
 import pyrc.system as pysys
 import pyrc.event as pyevent
+from pyrc.system.local import LocalFileSystem
 
 def get_sshdocker():
     path = pyrm.RemoteSSHFileSystem(
@@ -89,4 +90,4 @@ if __name__ == '__main__':
 
 
     #test_fs(get_sshdocker(), "/home/aferreira")
-    test_upload(get_sshdocker())
+    #test_upload(get_sshdocker())

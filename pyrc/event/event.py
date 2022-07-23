@@ -300,21 +300,3 @@ class RichRemoteFileTransferEvent(FileTransferEvent):
 
     def progress(self, *args, **kwargs):
         self.__progress.file_progress(filename = args[0], size = args[1], sent = args[2])
-
-class RichRemoteDirUploadEvent(FileTransferEvent):
-    def __init__(self, caller, *args, **kwargs):
-        super().__init__(caller)
-
-    def begin(self, *args, **kwargs):
-        __fromdir = args[0]
-        __todir = args[1]
-        rich.print(f"Uploading directory {__fromdir} to {self.caller.name()}:{__todir}")
-
-class RichRemoteDirDownloadEvent(FileTransferEvent):
-    def __init__(self, caller, *args, **kwargs):
-        super().__init__(caller)
-
-    def begin(self, *args, **kwargs):
-        __fromdir = args[0]
-        __todir = args[1]
-        rich.print(f"Downloading directory {__fromdir} to {self.caller.name()}:{__todir}")
