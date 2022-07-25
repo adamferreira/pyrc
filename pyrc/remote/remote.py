@@ -1,3 +1,4 @@
+import paramiko
 from pyrc.system import LocalFileSystem
 from pyrc.remote import RemoteSSHFileSystem
 
