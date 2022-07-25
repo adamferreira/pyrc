@@ -1,13 +1,16 @@
-from genericpath import isdir, isfile
-from charset_normalizer import from_path
-import paramiko
 import getpass
-from scp import SCPClient, SCPException
 import pyrc.event.event as pyevent
 from pyrc.system.command import FileSystemCommand
 from pyrc.system.filesystemtree import FileSystemTree
 from pyrc.system.filesystem import OSTYPE, FileSystem
 from pyrc.system.local import LocalFileSystem
+
+try:
+	import paramiko
+	from scp import SCPClient, SCPException
+	_CMDEXEC_REMOTE_ENABLED_ = True
+except BaseException as err:
+	_CMDEXEC_REMOTE_ENABLED_ = False
 
 
 def transfer_files(from_paths:'list[str]', to_path:str, from_fs:FileSystem, to_fs:FileSystem):
