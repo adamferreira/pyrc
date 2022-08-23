@@ -128,45 +128,6 @@ class CommandStorer(EventFlux):
     def end(self):
         return self.__stdout, self.__stderr, self.status()
 
-
-#for line in stdout:
-#    self.progress(line.decode("utf-8").rstrip())
-#    stdout.flush()
-# Poll process.stdout to show stdout live
-#while True:
-#    output = process.stdout.readline()
-#    if process.poll() is not None:
-#        break
-#    if output:
-#        self.progress(output.strip())
-#rc = process.poll()
-class CommandScrapper2(Event):
-    def __init__(self, caller = None, *args, **kwargs):
-        Event.__init__(self, caller)
-        self._errflux = None
-
-    def begin(self, cmd, cwd, stdin, stdout, stderr):
-        # For some reason we cannot read stdout and stderr at the same time
-        # It will work but some stdout line would be missed !
-        # So we read all stdout first, then all stderr
-        self._errflux = stderr
-        while True:
-            out = EventFlux.next_flux(stdout)
-            if out is None : break
-            self.progress(
-                stdoutline = out,
-                stderrline = ""
-                )
-
-    def end(self):
-        while True:
-            out = EventFlux.next_flux(self._errflux)
-            if out is None : break
-            self.progress(
-                stdoutline = "",
-                stderrline = out, 
-                )
-
 class CommandScrapper(Event):
     def __init__(self, caller, *args, **kwargs):
         Event.__init__(self, caller)

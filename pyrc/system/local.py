@@ -45,7 +45,7 @@ class LocalFileSystem(FileSystem):
 		environment = {} if environment is None else dict(environment)
 		environment.update(self.environ)
 		event = pyevent.CommandPrettyPrintEvent(self) if event is None else event
-		p = Popen([f"cd {cwd};{cmd}"], stdin = PIPE, stdout = PIPE, stderr = PIPE, env = environment, shell = True)
+		p = Popen([f"cd {cwd};{cmd}" if cwd != "" else f"{cmd}"], stdin = PIPE, stdout = PIPE, stderr = PIPE, env = environment, shell = self.is_unix())
 		event.begin(cmd, cwd, p.stdin, p.stdout, p.stderr)
 		#os.system(full_cmd) #TODO use os.system for realtime python stdout feed ?
 		return event.end()
