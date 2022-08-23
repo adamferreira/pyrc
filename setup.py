@@ -23,9 +23,9 @@ setuptools.setup(
         "pyrc.remote"    : "pyrc/remote",
         "pyrc.system"    : "pyrc/system",
         "pyrc.event"     : "pyrc/event",
-        "pyrc.wrappers" : "pyrc/wrappers"
+        "pyrc.cliwrapper" : "pyrc/cliwrapper"
     },
-    packages = ["pyrc", "pyrc.remote", "pyrc.system", "pyrc.event", "pyrc.wrappers", "pyrc.docker"], 
+    packages = ["pyrc", "pyrc.remote", "pyrc.system", "pyrc.event", "pyrc.cliwrapper", "pyrc.docker"], 
     test_suite="pyrc.tests",
     #packages=setuptools.find_packages(where="pyrc"),
     python_requires=">=3.0",
