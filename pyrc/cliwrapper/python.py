@@ -13,26 +13,29 @@ class Python(CLIWrapper):
 		self.venv = None
 		# Virtual env script path deduction
 		if self.is_venv():
-			venv_prefix = self.prefix()
-			if self.connector.is_unix():
-				self.venv = self.connector.join(venv_prefix, "bin", "activate")
-			else:
-				self.venv = self.connector.join(venv_prefix, "Scripts", "activate")
+			self.venv = self.prefix()
 
 	def __call__(self, cmd:str, cwd:str="", event:Event = None):
 		"""
 		Calls the command 'cmd' with the python executable
 		"""
-		source_cmd = f"source {self.venv} &&" if self.venv is not None else ""
-		return CLIWrapper.__call__(self, f"{source_cmd} {self.exe} {cmd}", cwd, event)
+		return CLIWrapper.__call__(self, f"{self._source_cmd()} {self.exe} {cmd}", cwd, event)
+
+	def _source_cmd(self) -> str:
+		if self.venv is None: return ""
+		# Virtual env script path deduction
+		if self.connector.is_unix():
+			source_cmd = self.connector.join(self.venv, "bin", "activate")
+		else:
+			source_cmd = self.connector.join(self.venv, "Scripts", "activate")
+		return f"source {source_cmd} &&"
 
 	def with_venv(self, cmd:str, cwd:str="", event:Event = None):
 		"""
 		Invoque a system command but with the python virtual env sourced first.
 		Note : This do NOT call python.
 		"""
-		source_cmd = f"source {self.venv} &&" if self.venv is not None else ""
-		return CLIWrapper.__call__(self, f"{source_cmd} {cmd}", cwd, event)
+		return CLIWrapper.__call__(self, f"{self._source_cmd()} {cmd}", cwd, event)
 
 	def base_prefix(self) -> str:
 		"""
@@ -56,3 +59,5 @@ class Python(CLIWrapper):
 		# https://stackoverflow.com/questions/1871549/determine-if-python-is-running-inside-virtualenv
 		# Check if the python exe belong to a virtual env
 		return self.base_prefix() != self.prefix()
+
+Python("/usr/bin/python3")("-c \"print(5)\"")
