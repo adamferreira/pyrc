@@ -255,6 +255,19 @@ class FileSystem:
 		"""
 		return NotImplemented
 
+	def isexe(self, path:str) -> bool:
+		"""
+		Args:
+			path (str): path to check
+
+		Raises:
+			RuntimeError:
+
+		Returns:
+			Return True if the path points to an executable file file (or a symbolic link pointing to a executable file file).
+		"""
+		return NotImplemented
+
 	def isdir(self, path:str) -> bool:
 		"""
 		Args:

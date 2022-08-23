@@ -129,6 +129,16 @@ class FileSystemCommand(FileSystem):
 			raise RuntimeError("isfile not supported for Windows remote systems")
 
 	#@overrides
+	def isexe(self, path:str) -> bool:
+		if self.is_unix():
+			out, err, status = self.exec_command(cmd = f"[[ -x {path} ]] && echo \"ok\"", event=pyevent.ErrorRaiseEvent())
+			if len(out) == 0: return False
+			else : return "ok" in out[0]
+		else:
+			# TODO
+			raise RuntimeError("isexe not supported for Windows remote systems")
+
+	#@overrides
 	def isdir(self, path:str) -> bool:
 		if self.is_unix():
 			out, err, status = self.exec_command(cmd = f"[[ -d {path} ]] && echo \"ok\"", event=pyevent.ErrorRaiseEvent())

@@ -109,6 +109,10 @@ class LocalFileSystem(FileSystem):
 		return type(self.__path)(path).is_file()
 
 	#@overrides
+	def isexe(self, path:str) -> bool:
+		return self.isfile(path) and os.access(path, os.X_OK)
+
+	#@overrides
 	def isdir(self, path:str) -> bool:
 		return type(self.__path)(path).is_dir()
 
