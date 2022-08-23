@@ -56,5 +56,3 @@ class Python(CLIWrapper):
 		# https://stackoverflow.com/questions/1871549/determine-if-python-is-running-inside-virtualenv
 		# Check if the python exe belong to a virtual env
 		return self.base_prefix() != self.prefix()
-
-print(Python("/usr/bin/python3").base_prefix())
