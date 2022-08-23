@@ -4,12 +4,11 @@ from pyrc.event import Event, ErrorRaiseEvent, CommandPrettyPrintEvent
 
 class Python(CLIWrapper):
 	def __init__(self, pyexe:str, connector:FileSystem = None, workdir:str = "") -> None:
-		super().__init__(connector, workdir)
+		super().__init__(pyexe, connector, workdir)
 
-		if not self.connector.isexe(pyexe):
-			raise RuntimeError(f"Python exe {pyexe} is not a valid path.")
+		#if not self.connector.isexe(pyexe):
+		#	raise RuntimeError(f"Python exe {pyexe} is not a valid path.")
 
-		self.exe = pyexe
 		self.venv = None
 		# Virtual env script path deduction
 		if self.is_venv():
@@ -19,7 +18,12 @@ class Python(CLIWrapper):
 		"""
 		Calls the command 'cmd' with the python executable
 		"""
-		return CLIWrapper.__call__(self, f"{self._source_cmd()} {self.exe} {cmd}", event)
+		return CLIWrapper(
+			prefix = f"{self._source_cmd()} {self.prefix}",
+			connector = self.connector,
+			workdir = self.workdir
+		).__call__(cmd, event)
+		#return CLIWrapper.__call__(self, cmd, event)
 
 	def _source_cmd(self) -> str:
 		if self.venv is None: return ""
@@ -35,7 +39,12 @@ class Python(CLIWrapper):
 		Invoque a system command but with the python virtual env sourced first.
 		Note : This do NOT call python.
 		"""
-		return CLIWrapper.__call__(self, f"{self._source_cmd()} {cmd}", event)
+		return CLIWrapper(
+			prefix = self._source_cmd(),
+			connector = self.connector,
+			workdir = self.workdir
+		).__call__(cmd, event)
+		#return CLIWrapper.__call__(self, f"{self._source_cmd()} {cmd}", event)
 
 	def base_prefix(self) -> str:
 		"""
@@ -59,3 +68,6 @@ class Python(CLIWrapper):
 		# https://stackoverflow.com/questions/1871549/determine-if-python-is-running-inside-virtualenv
 		# Check if the python exe belong to a virtual env
 		return self.base_prefix() != self.prefix()
+
+if __name__ == "__main__":
+	Python("python")("--version")
