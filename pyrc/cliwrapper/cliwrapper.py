@@ -24,7 +24,7 @@ class CLIWrapper(object):
 		# Do NOT register the new attribute
 		return self.arg(name)
 
-	def __call__(self, cmd:str, event:Event = None):
+	def __call__(self, cmd:str = "", event:Event = None):
 		return self.connector.exec_command(
 			cmd = f"{self.prefix} {cmd}",
 			cwd = self.workdir,

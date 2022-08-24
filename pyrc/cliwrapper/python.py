@@ -6,13 +6,29 @@ class Python(CLIWrapper):
 	def __init__(self, pyexe:str, connector:FileSystem = None, workdir:str = "") -> None:
 		super().__init__(pyexe, connector, workdir)
 
-		#if not self.connector.isexe(pyexe):
-		#	raise RuntimeError(f"Python exe {pyexe} is not a valid path.")
+		if not self.connector.isexe(pyexe):
+			raise RuntimeError(f"Python exe {pyexe} is not a valid path.")
 
 		self.venv = None
 		# Virtual env script path deduction
 		if self.is_venv():
 			self.venv = self.prefix()
+
+	def _source_cmd(self) -> str:
+		if self.venv is None: return ""
+		# Virtual env script path deduction
+		if self.connector.is_unix():
+			source_cmd = self.connector.join(self.venv, "bin", "activate")
+		else:
+			source_cmd = self.connector.join(self.venv, "Scripts", "activate")
+		return f"source {source_cmd} &&"
+
+	def arg(self, arg:str) -> 'CLIWrapper':
+		return CLIWrapper(
+			prefix = f"{self._source_cmd()} {self.prefix} {arg}",
+			connector = self.connector,
+			workdir = self.workdir
+		)
 
 	def __call__(self, cmd:str, event:Event = None):
 		"""
@@ -23,16 +39,6 @@ class Python(CLIWrapper):
 			connector = self.connector,
 			workdir = self.workdir
 		).__call__(cmd, event)
-		#return CLIWrapper.__call__(self, cmd, event)
-
-	def _source_cmd(self) -> str:
-		if self.venv is None: return ""
-		# Virtual env script path deduction
-		if self.connector.is_unix():
-			source_cmd = self.connector.join(self.venv, "bin", "activate")
-		else:
-			source_cmd = self.connector.join(self.venv, "Scripts", "activate")
-		return f"source {source_cmd} &&"
 
 	def with_venv(self, cmd:str, event:Event = None):
 		"""
@@ -44,9 +50,8 @@ class Python(CLIWrapper):
 			connector = self.connector,
 			workdir = self.workdir
 		).__call__(cmd, event)
-		#return CLIWrapper.__call__(self, f"{self._source_cmd()} {cmd}", event)
 
-	def base_prefix(self) -> str:
+	def system_base_prefix(self) -> str:
 		"""
 		Get the true path of the python exe
 		"""
@@ -57,7 +62,7 @@ class Python(CLIWrapper):
 		)
 		return out[0]
 
-	def prefix(self) -> str:
+	def system_prefix(self) -> str:
 		out, err, status = self(
 			cmd = f"-c \"import sys; print(sys.prefix)\"",
 			event = ErrorRaiseEvent(self.connector)
@@ -67,7 +72,9 @@ class Python(CLIWrapper):
 	def is_venv(self) -> bool:
 		# https://stackoverflow.com/questions/1871549/determine-if-python-is-running-inside-virtualenv
 		# Check if the python exe belong to a virtual env
-		return self.base_prefix() != self.prefix()
+		return self.system_base_prefix() != self.system_prefix()
 
 if __name__ == "__main__":
-	Python("python")("--version")
+	Python("/usr/bin/python3")("--version")
+	print(type(Python("/usr/bin/python3").arg("--version")))
+	Python("/usr/bin/python3").arg("--version")("")
