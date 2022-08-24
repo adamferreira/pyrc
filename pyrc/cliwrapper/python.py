@@ -12,7 +12,7 @@ class Python(CLIWrapper):
 		self.venv = None
 		# Virtual env script path deduction
 		if self.is_venv():
-			self.venv = self.prefix()
+			self.venv = self.system_prefix()
 
 	def _source_cmd(self) -> str:
 		if self.venv is None: return ""

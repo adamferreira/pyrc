@@ -26,7 +26,7 @@ class CLIWrapper(object):
 
 	def __call__(self, cmd:str = "", event:Event = None):
 		return self.connector.exec_command(
-			cmd = f"{self.prefix} {cmd}",
+			cmd = f"{self.prefix} {cmd}" if cmd != "" else f"{self.prefix}",
 			cwd = self.workdir,
 			environment = self.environ,
 			event = self.default_event() if event is None else event
