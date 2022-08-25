@@ -3,6 +3,13 @@ from pyrc.cliwrapper import CLIWrapper
 from pyrc.event import Event, ErrorRaiseEvent, CommandPrettyPrintEvent
 
 class Python(CLIWrapper):
+	@property
+	def modules(self) -> CLIWrapper:
+		"""
+		Returns a new CLIWrapper encapsulating the '-m' argument
+		"""
+		return self.arg("-m")
+
 	def __init__(self, pyexe:str, connector:FileSystem = None, workdir:str = "") -> None:
 		super().__init__(pyexe, connector, workdir)
 
@@ -40,6 +47,13 @@ class Python(CLIWrapper):
 			workdir = self.workdir
 		).__call__(cmd, event)
 
+	def inline(self, cmd:str) -> CLIWrapper:
+		"""
+		Invoque the given command 'cmd' as an inline python command
+		It calls <python> -c \"cmd\"
+		"""
+		return self.arg("-c").arg(f"\"{cmd}\"")
+
 	def with_venv(self, cmd:str, event:Event = None):
 		"""
 		Invoque a system command but with the python virtual env sourced first.
@@ -63,6 +77,10 @@ class Python(CLIWrapper):
 		return out[0]
 
 	def system_prefix(self) -> str:
+		"""
+		Get the value of sys.prefix of this python executable
+		"""
+		# self.inline("import sys; print(sys.prefix)")(event = ErrorRaiseEvent(self.connector))
 		out, err, status = self(
 			cmd = f"-c \"import sys; print(sys.prefix)\"",
 			event = ErrorRaiseEvent(self.connector)

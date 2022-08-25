@@ -3,7 +3,9 @@ from pyrc.event import Event, ErrorRaiseEvent, CommandPrettyPrintEvent
 
 # CLI Wrappers are callable objects
 class CLIWrapper(object):
+	prefix:str
 	connector:FileSystem
+	workdir:str
 
 	def __init__(self, prefix:str, connector:FileSystem = None, workdir:str = "") -> None:
 		# Default connector is local
@@ -25,8 +27,28 @@ class CLIWrapper(object):
 		return self.arg(name)
 
 	def __call__(self, cmd:str = "", event:Event = None):
+		"""
+		Execute the given command through the CLIWrapper's connector prefixed by the CLIWrapper's prefix.
+		If event is not specified, default_event(self) is called.
+		If prefix is empty but not cmd, the executed command is "{cmd}"
+		If cmd is empty but not the prefix, the executed command id "{prefix}"
+		If both are empty nothing is executed
+		If both are not empty, the executed command is "{prefix} {cmd}"
+		"""
+		_cmd:str = ""
+		if cmd == "":
+			if prefix == "":
+				return
+			else:
+				_cmd = f"{self.prefix}"
+		else:
+			if prefix == "":
+				_cmd = f"{cmd}"
+			else:
+				_cmd = f"{self.prefix} {cmd}"
+
 		return self.connector.exec_command(
-			cmd = f"{self.prefix} {cmd}" if cmd != "" else f"{self.prefix}",
+			cmd = _cmd,
 			cwd = self.workdir,
 			environment = self.environ,
 			event = self.default_event() if event is None else event
