@@ -37,12 +37,12 @@ class CLIWrapper(object):
 		"""
 		_cmd:str = ""
 		if cmd == "":
-			if prefix == "":
+			if self.prefix == "":
 				return
 			else:
 				_cmd = f"{self.prefix}"
 		else:
-			if prefix == "":
+			if self.prefix == "":
 				_cmd = f"{cmd}"
 			else:
 				_cmd = f"{self.prefix} {cmd}"
