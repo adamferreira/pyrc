@@ -32,7 +32,7 @@ class Python(CLIWrapper):
 
 	def arg(self, arg:str) -> 'CLIWrapper':
 		return CLIWrapper(
-			prefix = f"{self._source_cmd()} {self.prefix} {arg}",
+			prefix = f"{self._source_cmd()}{self.prefix} {arg}",
 			connector = self.connector,
 			workdir = self.workdir
 		)
@@ -42,7 +42,7 @@ class Python(CLIWrapper):
 		Calls the command 'cmd' with the python executable
 		"""
 		return CLIWrapper(
-			prefix = f"{self._source_cmd()} {self.prefix}",
+			prefix = f"{self._source_cmd()}{self.prefix}",
 			connector = self.connector,
 			workdir = self.workdir
 		).__call__(cmd, event)
