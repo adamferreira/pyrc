@@ -1,6 +1,6 @@
 import pyrc.system as pysys
-from pyrc.system import FileSystemCommand
-from pyrc.system import FileSystem
+from pyrc.system.command import FileSystemCommand
+from pyrc.system.system import FileSystem
 
 class ScriptGenerator(FileSystemCommand):
 
