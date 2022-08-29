@@ -96,7 +96,7 @@ class Python(CLIWrapper):
 		out, err, status = self("--version")
 		return out[0].replace("Python ", "")
 
-if __name__ == "__main__":
+#if __name__ == "__main__":
 	#Python("/usr/bin/python3")("--version")
 	#print(type(Python("/usr/bin/python3").arg("--version")))
 	#Python("/usr/bin/python3").arg("--version")("")
