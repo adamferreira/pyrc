@@ -10,8 +10,8 @@ class OSTYPE(Enum):
 
 # ------------------ FileSystem
 class FileSystem:
-
-	class EnvironDict(dict[str:str]):
+	# dict[str,str]
+	class EnvironDict(dict):
 		def __init__(self, path:'FileSystem'):
 			super().__init__()
 			self.__path = path
