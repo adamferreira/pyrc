@@ -1,6 +1,6 @@
-import pyrc.system as pysys
 from pyrc.system.command import FileSystemCommand
-from pyrc.system.system import FileSystem
+from pyrc.system.filesystem import FileSystem, OSTYPE
+from pyrc.system.local import LocalFileSystem
 
 class ScriptGenerator(FileSystemCommand):
 
@@ -14,7 +14,7 @@ class ScriptGenerator(FileSystemCommand):
 	"""
 	def __init__(self, 
 			script_path:str, 
-			ostype:pysys.OSTYPE = pysys.OSTYPE.LINUX
+			ostype:OSTYPE = OSTYPE.LINUX
 		) -> None:
 
 		FileSystemCommand.__init__(self)
@@ -23,7 +23,7 @@ class ScriptGenerator(FileSystemCommand):
 		self.ostype = ostype
 
 		# Setup script file
-		assert pysys.LocalFileSystem().isdir(pysys.LocalFileSystem().dirname(script_path))
+		assert LocalFileSystem().isdir(LocalFileSystem().dirname(script_path))
 		self.script = open(script_path, "w+")
 		self.__last_printed_env:str = ""
 
