@@ -14,6 +14,11 @@ class Python(CLIWrapper):
 	def __init__(self, pyexe:str = sys.executable, connector:FileSystem = None, workdir:str = "") -> None:
 		super().__init__(pyexe, connector, workdir)
 
+		# For some reasons on windows calling python with subprocess requires 'PYTHONPATH'
+		# variable to exist and be set when using non None 'env = ' argument in Popen(...)
+		# So we set it to an abritrary value
+		self.connector.environ["PYTHONPATH"] = ""
+
 		if not self.connector.isexe(pyexe):
 			raise RuntimeError(f"Python exe {pyexe} is not a valid path.")
 
@@ -91,10 +96,8 @@ class Python(CLIWrapper):
 		return out[0].replace("Python ", "")
 
 if __name__ == "__main__":
-	import sys
 	#Python("/usr/bin/python3")("--version")
 	#print(type(Python("/usr/bin/python3").arg("--version")))
 	#Python("/usr/bin/python3").arg("--version")("")
-	# sys.executable is current python exe
 	print(Python().version())
 	exit(-1)

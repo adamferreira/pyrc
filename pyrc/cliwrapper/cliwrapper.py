@@ -17,8 +17,6 @@ class CLIWrapper(object):
 
 		self.prefix = prefix
 		self.workdir = workdir
-		# Plug environ to its connector's
-		self.environ = self.connector.environ
 
 	# Overriding
 	# This will be called for every arg self.arg that is not yet registered in the class
@@ -51,7 +49,7 @@ class CLIWrapper(object):
 		return self.connector.exec_command(
 			cmd = _cmd,
 			cwd = self.workdir,
-			environment = self.environ,
+			environment = self.connector.environ,
 			event = self.default_event() if event is None else event
 		)
 
