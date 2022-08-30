@@ -1,6 +1,7 @@
 from pyrc.system import FileSystem
 from pyrc.cliwrapper import CLIWrapper
 from pyrc.event import Event, ErrorRaiseEvent, CommandPrettyPrintEvent
+import sys
 
 class Python(CLIWrapper):
 	@property
@@ -9,8 +10,8 @@ class Python(CLIWrapper):
 		Returns a new CLIWrapper encapsulating the '-m' argument
 		"""
 		return self.arg("-m")
-
-	def __init__(self, pyexe:str, connector:FileSystem = None, workdir:str = "") -> None:
+	# The default python is the one that is calling this code ! (sys.executable)
+	def __init__(self, pyexe:str = sys.executable, connector:FileSystem = None, workdir:str = "") -> None:
 		super().__init__(pyexe, connector, workdir)
 
 		if not self.connector.isexe(pyexe):
@@ -70,21 +71,14 @@ class Python(CLIWrapper):
 		Get the true path of the python exe
 		"""
 		base_prefix_cmd = """getattr(sys, 'base_prefix', None) or getattr(sys, 'real_prefix', None) or sys.prefix"""
-		out, err, status = self(
-			cmd = f"-c \"import sys; print({base_prefix_cmd})\"",
-			event = ErrorRaiseEvent(self.connector) 
-		)
+		out, err, status = self.silent_call(f"-c \"import sys; print({base_prefix_cmd})\"")
 		return out[0]
 
 	def system_prefix(self) -> str:
 		"""
 		Get the value of sys.prefix of this python executable
 		"""
-		# self.inline("import sys; print(sys.prefix)")(event = ErrorRaiseEvent(self.connector))
-		out, err, status = self(
-			cmd = f"-c \"import sys; print(sys.prefix)\"",
-			event = ErrorRaiseEvent(self.connector)
-		)
+		out, err, status = self.silent_call(f"-c \"import sys; print(sys.prefix)\"")
 		return out[0]
 
 	def is_venv(self) -> bool:
@@ -93,10 +87,14 @@ class Python(CLIWrapper):
 		return self.system_base_prefix() != self.system_prefix()
 
 	def version(self) -> str:
-		out, err, status = self("--version")
+		out, err, status = self.silent_call("--version")
 		return out[0].replace("Python ", "")
 
-#if __name__ == "__main__":
+if __name__ == "__main__":
+	import sys
 	#Python("/usr/bin/python3")("--version")
 	#print(type(Python("/usr/bin/python3").arg("--version")))
 	#Python("/usr/bin/python3").arg("--version")("")
+	# sys.executable is current python exe
+	print(Python().version())
+	exit(-1)

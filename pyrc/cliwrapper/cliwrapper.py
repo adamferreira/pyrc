@@ -1,3 +1,4 @@
+from pyrc import event
 from pyrc.system import FileSystem, LocalFileSystem
 from pyrc.event import Event, ErrorRaiseEvent, CommandPrettyPrintEvent
 
@@ -53,6 +54,21 @@ class CLIWrapper(object):
 			environment = self.environ,
 			event = self.default_event() if event is None else event
 		)
+
+	def silent_call(self, cmd:str = ""):
+		"""
+		Silently calls the command 'cmd'
+		Uses ErrorRaiseEvent to hide inputs and output of the process
+
+		Args:
+			cmd (str, optional): Command to call. Defaults to "".
+
+		Returns:
+			out:list[str]
+			err:list[str]
+			status:int
+		"""
+		return self(cmd, event = ErrorRaiseEvent(self.connector))
 
 	def arg(self, arg:str) -> 'CLIWrapper':
 		"""
