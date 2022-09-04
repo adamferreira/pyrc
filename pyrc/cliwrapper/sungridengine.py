@@ -1,7 +1,15 @@
 import re, time
 import pyrc.system as pysys
 import pyrc.event as pyevent
-class SunGridEngine(object):
+
+from pyrc.system import FileSystem
+from pyrc.cliwrapper import CLIWrapper
+
+class SunGridEngine(CLIWrapper):
+    def __init__(self, prefix:str = "", connector:FileSystem = None, workdir:str = "") -> None:
+        super().__init__(prefix, connector, workdir)
+
+class __SunGridEngine(object):
 
     def get_submission_info(line:str) -> 'tuple[str,str]':
         m = re.match("Your job (?P<jid>([0-9]+)) \(\"(?P<name>(.)*)\"\) has been submitted", line)
