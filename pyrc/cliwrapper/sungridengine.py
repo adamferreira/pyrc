@@ -6,11 +6,10 @@ from pyrc.system import FileSystem
 from pyrc.cliwrapper import CLIWrapper
 
 class SunGridEngine(CLIWrapper):
-    def __init__(self, prefix:str = "", connector:FileSystem = None, workdir:str = "") -> None:
-        super().__init__(prefix, connector, workdir)
+    def __init__(self, connector:FileSystem = None, workdir:str = "") -> None:
+        super().__init__("", connector, workdir)
 
-class __SunGridEngine(object):
-
+    @staticmethod
     def get_submission_info(line:str) -> 'tuple[str,str]':
         m = re.match("Your job (?P<jid>([0-9]+)) \(\"(?P<name>(.)*)\"\) has been submitted", line)
         if m is None:
@@ -18,9 +17,8 @@ class __SunGridEngine(object):
         else:
             return m.group("jid"), m.group("name")
 
-
     # tips for selecting specific sge id : qstat | grep "^[[:space:]]*$ID[[:space:]]"
-    def fancyqstatcmd(flags: 'list[str]' = [], job_prefix: str = None) -> 'str':
+    def __fancyqstatcmd(flags: 'list[str]' = [], job_prefix: str = None) -> 'str':
         """
             This perferms a formated qstats command on the remote machine.
             The format is the following : 
@@ -49,7 +47,7 @@ class __SunGridEngine(object):
 
         return qstat_cmd
 
-    def qstat(path:pysys.FileSystem, flags: 'list[str]' = [], job_prefix: str = None, cwd:str = "", environment:dict = None) -> 'list[dict[str:str]]':
+    def qstat(self, flags: 'list[str]' = [], job_prefix: str = None, cwd:str = "", environment:dict = None) -> 'list[dict[str:str]]':
         """
             This perferms a formated qstats command on the remote machine.
             The format is the following : 
@@ -65,13 +63,13 @@ class __SunGridEngine(object):
             [type]: [description]
         """
 
-        assert path.is_unix()
+        assert self.connector.is_unix()
         jobs = []
-        qstatlines, errors, status = path.exec_command(
+        qstatlines, errors, status = self.connector.exec_command(
             cmd = SunGridEngine.fancyqstatcmd(flags, job_prefix),
             cwd = cwd,
             environment = environment,
-            event = pyevent.CommandStoreEvent(path.connector) # hard coded store event
+            event = pyevent.CommandStoreEvent(self.connector) # hard coded store event
         )
 
         for line in qstatlines:
@@ -105,14 +103,14 @@ class __SunGridEngine(object):
 
         return jobs   
 
-    def wait(path:pysys.FileSystem, jid:str, refresh:int=30):
-        job_info = SunGridEngine.qstat(path, job_prefix=jid)
+    def wait(self, jid:str, refresh:int=30):
+        job_info = SunGridEngine.qstat(self.connector, job_prefix=jid)
         while len(job_info) > 0:
             time.sleep(refresh)
-            job_info = SunGridEngine.qstat(path, job_prefix=jid)
+            job_info = SunGridEngine.qstat(self.connector, job_prefix=jid)
 
     def qsub(
-        path:pysys.FileSystem,
+        self,
         bash_script:str,
         jobname:str = None,
         script_parameters:'str' = [],
@@ -149,11 +147,11 @@ class __SunGridEngine(object):
         qsubcmd += f" {bash_script}"
         qsubcmd += (" " + " ".join(script_parameters)) if (len(script_parameters) > 0) else ""
 
-        out, err, _ = path.exec_command(
+        out, err, _ = self.connector.exec_command(
             cmd = qsubcmd,
             cwd = "" if working_directory is None else working_directory,
             environment = None, # Qsub doesnt need env to be launch as the script run in separate shell env,
-            event = pyevent.CommandPrettyPrintEvent(path, print_input=True, print_errors=True) if (event is None) else event
+            event = pyevent.CommandPrettyPrintEvent(self.connector, print_input=True, print_errors=True) if (event is None) else event
         )   
         assert len(err) == 0
         jid, jname = SunGridEngine.get_submission_info(out[0])

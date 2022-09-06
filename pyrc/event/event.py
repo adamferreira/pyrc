@@ -15,9 +15,11 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 class FluxIterator:
+
+    # TODO : Use yield ? Can it be generic ?
     @staticmethod
     def next(flux) -> str:
-        # If the flux is not we generator
+        # If the flux is not a Generator
         # We assume is a pipe-style object like in paramiko or subprocess
         if flux is None: return None
         out:str = None
