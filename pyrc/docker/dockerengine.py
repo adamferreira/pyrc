@@ -25,8 +25,6 @@ class DockerEngine(FileSystemCommand):
 	#@overrides
 	def exec_command(self, cmd:str, cwd:str = "", environment:dict = None, event = None):
 		assert self.container is not None
-		environment = {} if environment is None else dict(environment)
-		environment.update(self.environ)
 
 		# to avoid "OCI runtime exec failed: exec failed: Cwd must be an absolute path: unknown"
 		# check if cwd is empty ot avoid recursive call
@@ -88,6 +86,7 @@ class DockerEngine(FileSystemCommand):
 		self.evaluate(f"echo \"{line}\" >> ~/.bashrc")
 
 	def register_env(self, var:str, value:str) -> None:
+		raise NotImplementedError("TO REWORK")
 		"""
 		Add export <var>=<value> to the user bashrc file
 		"""

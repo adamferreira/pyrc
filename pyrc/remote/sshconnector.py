@@ -227,9 +227,6 @@ class RemoteSSHFileSystem(FileSystemCommand):
 		self._scp = None # set in 'open()'
 		# Setting up proxy
 		self._sshcon.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # no known_hosts error
-
-		# Will be set later
-		self.environ = {}
 		
 
 	def __del__(self):
@@ -291,8 +288,6 @@ class RemoteSSHFileSystem(FileSystemCommand):
 
 	#@overrides
 	def exec_command(self, cmd:str, cwd:str = "", environment:dict = None, event:pyevent.Event = None):
-		environment = {} if environment is None else dict(environment)
-		environment.update(self.environ)
 		stdin, stdout, stderr = self.__exec_command(cmd, cwd, environment)
 		# Blocking event
 		event = pyevent.CommandPrettyPrintEvent(self, print_input=True, print_errors=True) if event is None else event

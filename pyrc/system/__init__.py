@@ -3,3 +3,4 @@ from .command import FileSystemCommand
 from .scriptgenerator import ScriptGenerator
 from .local import LocalFileSystem
 from .filesystemtree import FileSystemTree
+from .session import Session

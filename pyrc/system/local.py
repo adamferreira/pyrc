@@ -42,13 +42,12 @@ class LocalFileSystem(FileSystem):
 
 	#@overrides
 	def exec_command(self, cmd:str, cwd:str = "", environment:dict = None, event:pyevent.Event = None):
-		environment = {} if environment is None else dict(environment)
-		environment.update(self.environ)
+		# TODO : make event not Noneable ?
 		event = pyevent.CommandPrettyPrintEvent(self) if event is None else event
 		p = Popen(cmd, cwd = cwd if cwd != "" else None, stdin = PIPE, stdout = PIPE, stderr = PIPE, env = environment, shell = self.is_unix())
 		#p = Popen(f"cd {cwd};{cmd}" if cwd != "" else f"{cmd}", stdin = PIPE, stdout = PIPE, stderr = PIPE, env = environment, shell = self.is_unix())
-		event.begin(cmd, cwd, p.stdin, p.stdout, p.stderr)
 		#os.system(full_cmd) #TODO use os.system for realtime python stdout feed ?
+		event.begin(cmd, cwd, p.stdin, p.stdout, p.stderr)
 		return event.end()
 
 	#@overrides

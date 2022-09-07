@@ -1,7 +1,8 @@
+from copy import copy
+import sys
 from pyrc.system import FileSystem
 from pyrc.cliwrapper import CLIWrapper
 from pyrc.event import Event, ErrorRaiseEvent, CommandPrettyPrintEvent
-import sys
 
 class Python(CLIWrapper):
 	@property
@@ -11,13 +12,12 @@ class Python(CLIWrapper):
 		"""
 		return self.arg("-m")
 	# The default python is the one that is calling this code ! (sys.executable)
-	def __init__(self, pyexe:str = sys.executable, connector:FileSystem = None, workdir:str = "") -> None:
-		super().__init__(pyexe, connector, workdir)
-
+	def __init__(self, pyexe:str = sys.executable, connector:FileSystem = None, workingdir:str = "") -> None:
+		super().__init__(pyexe, connector, workingdir)
 		# For some reasons on windows calling python with subprocess requires 'PYTHONPATH'
 		# variable to exist and be set when using non None 'env = ' argument in Popen(...)
 		# So we set it to an abritrary value
-		self.connector.environ["PYTHONPATH"] = ""
+		self.environ["PYTHONPATH"] = ""
 
 		if not self.connector.isexe(pyexe):
 			raise RuntimeError(f"Python exe {pyexe} is not a valid path.")
@@ -36,22 +36,18 @@ class Python(CLIWrapper):
 			source_cmd = self.connector.join(self.venv, "Scripts", "activate")
 		return f"source {source_cmd} &&"
 
-	def arg(self, arg:str) -> 'CLIWrapper':
-		return CLIWrapper(
-			prefix = f"{self._source_cmd()}{self.prefix} {arg}",
-			connector = self.connector,
-			workdir = self.workdir
-		)
+	def arg(self, arg:str) -> CLIWrapper:
+		cpy = copy(self)
+		cpy.prefix = f"{self._source_cmd()}{self.prefix} {arg}"
+		return cpy
 
 	def __call__(self, cmd:str, event:Event = None):
 		"""
 		Calls the command 'cmd' with the python executable
 		"""
-		return CLIWrapper(
-			prefix = f"{self._source_cmd()}{self.prefix}",
-			connector = self.connector,
-			workdir = self.workdir
-		).__call__(cmd, event)
+		cpy = copy(self)
+		cpy.prefix = f"{self._source_cmd()}{self.prefix}"
+		return cpy(cmd, event)
 
 	def inline(self, cmd:str) -> CLIWrapper:
 		"""
@@ -65,11 +61,9 @@ class Python(CLIWrapper):
 		Invoque a system command but with the python virtual env sourced first.
 		Note : This do NOT call python.
 		"""
-		return CLIWrapper(
-			prefix = self._source_cmd(),
-			connector = self.connector,
-			workdir = self.workdir
-		).__call__(cmd, event)
+		cpy = copy(self)
+		cpy.prefix = self._source_cmd()
+		return cpy(cmd, event)
 
 	def system_base_prefix(self) -> str:
 		"""

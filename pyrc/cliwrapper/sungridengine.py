@@ -8,6 +8,7 @@ from pyrc.cliwrapper import CLIWrapper
 class SunGridEngine(CLIWrapper):
     def __init__(self, connector:FileSystem = None, workdir:str = "") -> None:
         super().__init__("", connector, workdir)
+        # TODO : Remove environment and cwd from commands ?
 
     @staticmethod
     def get_submission_info(line:str) -> 'tuple[str,str]':
@@ -101,7 +102,7 @@ class SunGridEngine(CLIWrapper):
                 "slots": jslot
             })
 
-        return jobs   
+        return jobs
 
     def wait(self, jid:str, refresh:int=30):
         job_info = SunGridEngine.qstat(self.connector, job_prefix=jid)
