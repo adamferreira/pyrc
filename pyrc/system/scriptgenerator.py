@@ -40,7 +40,8 @@ class ScriptGenerator(FileSystemCommand):
 
 	#@overrides
 	def exec_command(self, cmd:str, cwd:str = "", environment:dict = None, event = None):
-		if environment is not None:
+		environment = {} if environment is None else self.environ
+		if len(environment) > 0:
 			# Do not reprint envs var is its the same than last call
 			# Because PATH=<vars>:PATH would became VERY long if called to many times
 			if self.__last_printed_env != str(environment):

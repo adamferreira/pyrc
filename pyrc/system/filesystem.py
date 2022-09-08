@@ -12,6 +12,11 @@ class OSTYPE(Enum):
 class FileSystem:
 	# dict[str,str]
 	class EnvironDict(dict):
+		"""
+		EnvironDict acts as a gateway to a FileSystem object to get and set env variable of this FileSystem
+		d[var] invoques d.filesystem.env(key)
+		d[var] = value stores the values in the dict and will be passed down to the FileSystem in the next exec_command call
+		"""
 		def __init__(self, path:'FileSystem'):
 			super().__init__()
 			self.__path = path
@@ -135,7 +140,7 @@ class FileSystem:
 		Args:
 			cmd (str): command to execute
 			cwd (str, optional): current working directory. Defaults to "".
-			environment (dict, optional): environment variables. Defaults to None.
+			environment (dict, optional): environment variables. If None, self.environ is used. Defaults to None.
 			event (pyevent.Event, optional): event to plug the command to. Defaults to None.
 
 		Returns:

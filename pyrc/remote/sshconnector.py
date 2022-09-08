@@ -291,8 +291,7 @@ class RemoteSSHFileSystem(FileSystemCommand):
 
 	#@overrides
 	def exec_command(self, cmd:str, cwd:str = "", environment:dict = None, event:pyevent.Event = None):
-		environment = {} if environment is None else dict(environment)
-		environment.update(self.environ)
+		environment = {} if environment is None else self.environ
 		stdin, stdout, stderr = self.__exec_command(cmd, cwd, environment)
 		# Blocking event
 		event = pyevent.CommandPrettyPrintEvent(self, print_input=True, print_errors=True) if event is None else event
