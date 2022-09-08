@@ -1,18 +1,22 @@
-from copy import copy
-from pyrc.system import FileSystem, LocalFileSystem, Session
+from pyrc import event
+from pyrc.system import FileSystem, LocalFileSystem
 from pyrc.event import Event, ErrorRaiseEvent, CommandPrettyPrintEvent
 
-# Forward Declaration
-class CLIWrapper(Session): pass
-
 # CLI Wrappers are callable objects
-class CLIWrapper(Session):
+class CLIWrapper(object):
 	prefix:str
+	connector:FileSystem
+	workdir:str
 
-	def __init__(self, prefix:str, connector:FileSystem = None, workingdir:str = "") -> None:
-		# Default connector is local for a Command Line Wrapper
-		super().__init__(LocalFileSystem() if connector is None else connector, workingdir)
+	def __init__(self, prefix:str, connector:FileSystem = None, workdir:str = "") -> None:
+		# Default connector is local
+		if connector is None:
+			self.connector = LocalFileSystem()
+		else:
+			self.connector = connector
+
 		self.prefix = prefix
+		self.workdir = workdir
 
 	# Overriding
 	# This will be called for every arg self.arg that is not yet registered in the class
@@ -20,17 +24,6 @@ class CLIWrapper(Session):
 	def __getattr__(self, name):
 		# Do NOT register the new attribute
 		return self.arg(name)
-
-	def __copy__(self) -> CLIWrapper:
-		"""Copy operator, shallow copy of every attributes
-		"""
-		cpy = CLIWrapper(
-			prefix = self.prefix,
-			connector = self.connector,
-			workingdir = self.workingdir
-		)
-		cpy.environ = self.environ
-		return cpy
 
 	def __call__(self, cmd:str = "", event:Event = None):
 		"""
@@ -53,8 +46,10 @@ class CLIWrapper(Session):
 			else:
 				_cmd = f"{self.prefix} {cmd}"
 
-		return self.exec_command(
+		return self.connector.exec_command(
 			cmd = _cmd,
+			cwd = self.workdir,
+			environment = self.connector.environ,
 			event = self.default_event() if event is None else event
 		)
 
@@ -80,9 +75,11 @@ class CLIWrapper(Session):
 		CLIWrapper("foo").arg("bar") has the prefix "foo bar"
 		Equivalently, CLIWrapper("foo").bar has the prefix "foo bar"
 		"""
-		cpy = copy(self)
-		cpy.prefix = f"{self.prefix} {arg}"
-		return cpy
+		return type(self)(
+			prefix = f"{self.prefix} {arg}",
+			connector = self.connector,
+			workdir = self.workdir
+		)
 
 	def default_event(self) -> Event:
 		#return ErrorRaiseEvent(self.connector)
