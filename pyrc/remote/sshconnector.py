@@ -294,6 +294,7 @@ class RemoteSSHFileSystem(FileSystemCommand):
 		environment = {} if environment is None else self.environ
 		stdin, stdout, stderr = self.__exec_command(cmd, cwd, environment)
 		# Blocking event
+		# TODO: Unify default event for all connectors ?
 		event = pyevent.CommandPrettyPrintEvent(self, print_input=True, print_errors=True) if event is None else event
 		event.begin(cmd, cwd, stdin, stdout, stderr)
 		return event.end()

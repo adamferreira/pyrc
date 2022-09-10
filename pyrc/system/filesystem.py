@@ -1,4 +1,5 @@
 from enum import Enum
+from genericpath import isdir, isfile
 from pathlib import PurePosixPath, PureWindowsPath
 import pyrc.event.event as pyevent
 
@@ -214,9 +215,32 @@ class FileSystem:
 		return NotImplemented
 
 	def rmdir(self, path:str, recur:bool = False):
-		# TODO doc
-		# Keep rmdir and rm_tree in a single method ?
+		"""
+		Remove this directory.
+		Args:
+			path (str): Directory to remove.
+			recur (bool, optional): Recursivly delete directory content (If recur is False, directory must be empty). Defaults to False.
+		"""
 		return NotImplemented
+
+	def rm(self, path:str, recur:bool = False, missing_ok:bool = False):
+		"""
+		Delete the given path, may it be a file or a directory.
+		Calls unlink(path, missing_ok) if path is a file or symbolic link.
+		Calls rmkdr(path, recur) if path is a directory.
+		Args:
+			path (str): path to delete.
+			missing_ok (bool, optional): FileNotFoundError is raised if the path does not exist. Defaults to False.
+			recur (bool, optional): Recursivly delete directory content if path is a directory 
+				(If recur is False, directory must be empty). 
+				Defaults to False.
+		"""
+		if self.isfile(path):
+			self.unlink(path, missing_ok)
+		elif self.isdir(path):
+			self.rmdir(path, recur)
+		else:
+			raise FileNotFoundError(f"Cannot rm {path}. Path does not exist")
 
 	def unlink(self, path:str, missing_ok:bool=False) -> None:
 		"""
@@ -225,8 +249,8 @@ class FileSystem:
 		If missing_ok is false (the default), FileNotFoundError is raised if the path does not exist.
 		If missing_ok is true, FileNotFoundError exceptions will be ignored (same behavior as the POSIX rm -f command).
 		Args:
-			path (str): path to remove
-			missing_ok (bool, optional): Defaults to False.
+			path (str): path to delete.
+			missing_ok (bool, optional): FileNotFoundError is raised if the path does not exist. Defaults to False.
 		"""
 		return NotImplemented
 

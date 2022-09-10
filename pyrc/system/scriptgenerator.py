@@ -40,6 +40,10 @@ class ScriptGenerator(FileSystemCommand):
 
 	#@overrides
 	def exec_command(self, cmd:str, cwd:str = "", environment:dict = None, event = None):
+		"""
+		For ScriptGenerator, all submitted command are writtend into a file eastead of being executed.
+		'environment' is ignored.
+		"""
 		environment = {} if environment is None else self.environ
 		if len(environment) > 0:
 			# Do not reprint envs var is its the same than last call
