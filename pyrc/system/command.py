@@ -194,6 +194,14 @@ class FileSystemCommand(FileSystem):
 			return NotImplemented
 
 	#@overrides
+	def copy(self, src:str, dst:str, follow_symlinks:bool=True):
+		# TODO : implement follow_symlinks logic
+		if self.is_unix():
+			self.exec_command(f"cp -r {src} {dst}", event=pyevent.ErrorRaiseEvent())
+		else:
+			return NotImplemented
+
+	#@overrides
 	def append(self, line:str, file:str) -> None:
 		assert self.isfile(file)
 		if self.is_unix():

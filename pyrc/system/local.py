@@ -24,6 +24,13 @@ class LocalFileSystem(FileSystem):
 			self.__path = WindowsPath()
 
 	# ------------------------
+	#		Operators
+	# ------------------------
+	def __eq__(self, other):
+		"""Two LocalFileSystem are considered equals if they are of the same type"""
+		return type(self).__name__ == type(other).__name__
+
+	# ------------------------
 	#		Overrides
 	# ------------------------
 
@@ -143,6 +150,11 @@ class LocalFileSystem(FileSystem):
 		folder_path = FileSystem.unzip(self, archive_path, to_path)
 		shutil.unpack_archive(filename = archive_path, extract_dir = folder_path)
 		return folder_path
+
+	#@overrides
+	def copy(self, src:str, dst:str, follow_symlinks:bool=True):
+		import shutil
+		return shutil.copy(src, dst, follow_symlinks = follow_symlinks)
 
 	#@overrides
 	def getsize(self, path) -> int:

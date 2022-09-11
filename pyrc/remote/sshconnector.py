@@ -93,6 +93,9 @@ class RemoteSSHFileSystem(FileSystemCommand):
 		# Will be set later
 		self.environ = {}
 		
+	def __eq__(self, other):
+		"""Two RemoteSSHFileSystem are considered equals if they have the same config"""
+		return (type(self).__name__ == type(other).__name__) and (self._kwargs == other._kwargs) 
 
 	def __del__(self):
 		self.close()

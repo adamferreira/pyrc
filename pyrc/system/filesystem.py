@@ -74,6 +74,12 @@ class FileSystem:
 		self.environ = FileSystem.EnvironDict(self)
 
 	# ------------------------
+	#		Operators
+	# ------------------------
+	def __eq__(self, other):
+		return NotImplemented
+
+	# ------------------------
 	#		Custom functions
 	# ------------------------
 
@@ -357,6 +363,19 @@ class FileSystem:
 			return archive_path.replace(self.ext(archive_path), "")
 
 		return to_path
+
+	def copy(self, src:str, dst:str, follow_symlinks:bool=True):
+		"""
+		Copies the file src to the file or directory dst. src and dst should be strings.
+		If dst specifies a directory, the file will be copied into dst using the base filename from src. 
+		If dst specifies a file that already exists, it will be replaced. Returns the path to the newly created file.
+		If follow_symlinks is false, and src is a symbolic link, dst will be created as a symbolic link. 
+		If follow_symlinks is true and src is a symbolic link, dst will be a copy of the file src refers to.
+		copy() copies the file data and the file’s permission mode (see os.chmod()). 
+		Other metadata, like the file’s creation and modification times, is not preserved. 
+		To preserve all file metadata from the original, use copy2() instead.
+		"""
+		return NotImplemented
 
 
 	def getsize(self, path) -> int:
