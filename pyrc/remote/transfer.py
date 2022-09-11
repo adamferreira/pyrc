@@ -145,49 +145,56 @@ def transfer(
 		The 'sent' path (depending it as been compressed or not beforehand).
 		The 'received' path (depending it as been uncompressed or not afterwards).
 	"""
-	sent, reveiced = None, None
+
+	if not from_fs.isfile(from_path) and not from_fs.isdir(from_path):
+		raise RuntimeError(f"Path {from_path} is not a valid path")
+
+	sent, reveiced = from_path, to_fs.join(to_path, from_fs.basename(from_path))
 	# Files to be remove from 'from_fs' after the transfer completion
 	from_fs_to_remove = []
 	# Files to be remove from 'to_fs' after the transfer completion
 	to_fs_to_remove = []
 
+	# Marks 'from_path' of 'from_fs' to be deleted if requested
+	if from_path_delete:
+		from_fs_to_remove.append(from_path)
+
+	# Step 1 : Compression (if requested)
 	# If 'compress_before' is selected, from_path becomes an archive (and thus a file)
 	# If 'uncompress_after' is not selected, 'sent' is an archive (and thus a file)
 	if compress_before:
 		# Compress file or folder in 'from_fs'
 		archivename_from = from_fs.zip(path = from_path)
-		# transfer it as a file
-		archivename_to = transfer_files([archivename_from], to_path, from_fs, to_fs)[0]
-		# Remove archive created in 'from_fs'
-		from_fs.unlink(archivename_from)
-		
-		if uncompress_after:
-			# Uncompress transfered archive in 'to_fs' filesystem
-			to_fs.unzip(archivename_to)
-			# Remove transfered archive from 'to_fs' filesystem
-			to_fs.unlink(archivename_to)
-			return archivename_from, to_fs.join(to_path, from_fs.basename(from_path))
+		# From_path becomes the newly created archive
+		from_path = archivename_from
+		sent = archivename_from
+		# Archive created in 'from_fs' is marked for removal
+		from_fs_to_remove.append(archivename_from)
 
-		return archivename_from, archivename_to
-			
 
-	# Default transfert case
+	# Step 2 : Transfer
 	if from_fs.isfile(from_path):
 		reveiced = transfer_files([from_path], to_path, from_fs, to_fs)[0]
-		# Delete 'from_path' is 'from_fs' if requested
-		if from_path_delete:
-			from_fs.rm(from_path, recur = True)
-		return from_path, reveiced
-
 	elif from_fs.isdir(from_path):
 		transfer_dir(from_path, to_path, from_fs, to_fs)
-		# Delete 'from_path' is 'from_fs' if requested
-		if from_path_delete:
-			from_fs.rm(from_path, recur = True)
-		return from_path, to_fs.join(to_path, from_fs.basename(from_path))
 
-	else:
-		raise RuntimeError(f"Path {from_path} is not a valid path")
+	# Step 3 : Uncompression (if requested)
+	if uncompress_after:
+		#'reveiced' must be an archive to be uncompressed
+		assert to_fs.isfile(reveiced) and to_fs.ext(reveiced) == ".zip"
+		# Uncompress transfered archive in 'to_fs' filesystem
+		to_fs.unzip(reveiced)
+		# Marks transfered archive as to be removed from 'to_fs'
+		from_fs_to_remove.append(reveiced)
+		# The actuel received file in 'to_fs' is now the uncompressed archive
+		received = to_fs.join(to_path, from_fs.basename(from_path))
+
+	# Step 4 : Cleaning elements from both filesystems
+	[from_fs.rm(p, recur = True) for p in from_fs_to_remove]
+	[to_fs.rm(p, recur = True) for p in to_fs_to_remove]
+
+	return sent, reveiced
+
 
 
 
@@ -221,29 +228,11 @@ def __buffered_transfer(
 	# Get 'from_path' equivalent in the buffered path
 	# And remove local buffer content
 	transfer(
-		from_path = received,#LocalFileSystem().join(local_buffer_path, from_fs.basename(from_path)),
+		from_path = received,
 		to_path = to_path,
 		from_fs = LocalFileSystem(),
 		to_fs = to_fs,
 		compress_before = False,
 		uncompress_after = uncompress_after,
 		from_path_delete = True
-	)
-
-if __name__ == "__main__":
-	local = LocalFileSystem()
-	A = local.join(local.join("C:\\", "Users", "adamf", "Downloads", "tmp", "A"))
-	buff  = local.join(local.join("C:\\", "Users", "adamf", "Downloads", "tmp", "buffer"))
-	B = _from = local.join(local.join("C:\\", "Users", "adamf", "Downloads", "tmp", "B"))
-	assert local.isdir(A) and local.isdir(buff) and local.isdir(B)
-	assert local.isfile(local.join(A, "to_move.txt"))
-	__buffered_transfer(
-		local.join(A, "to_move.txt"),
-		B,
-		buff,
-		local,
-		local,
-		compress_before = True,
-		uncompress_after = True,
-		from_path_delete = False
 	)
