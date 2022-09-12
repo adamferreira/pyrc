@@ -138,6 +138,7 @@ class LocalFileSystem(FileSystem):
 
 	#@overrides
 	def zip(self, path:str, archive_path:str = None, flag:str = "") -> str:
+		#TODO : Make it work when path is a file and not a directory
 		import shutil
 		archive_path = FileSystem.zip(self, path, archive_path, flag)
 		# Remove .zip extension when using shutil

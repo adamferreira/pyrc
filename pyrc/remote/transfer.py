@@ -9,7 +9,7 @@ try:
 except BaseException as err:
 	_CMDEXEC_REMOTE_ENABLED_ = False
 
-def transfer_files(from_paths:'list[str]', to_path:str, from_fs:FileSystem, to_fs:FileSystem):
+def transfer_files(from_paths:'list[str]', to_path:str, from_fs:FileSystem, to_fs:FileSystem) -> str:
 	"""
 	Transfert FILES from one filesystem to a directory in another one
 	Args:
@@ -130,7 +130,7 @@ def transfer(
 	to_fs:FileSystem,
 	compress_before:bool = False,
 	uncompress_after:bool = False,
-	from_path_delete:bool = False):
+	from_path_delete:bool = False) -> tuple[str, str]:
 	"""
 	Transfert a file or directory from one filesystem to a directory in another one.
 	Args:
