@@ -66,7 +66,7 @@ class ScriptGenerator(FileSystemCommand):
 		If cmd is not "", a cd to 'cwd' is performed before calling 'cmd'
 		'environment' and 'event' are ignored
 		"""
-		lines = [f"{cmd}\n", "\n"] if cwd == "" else [f"{cmd}\n", f"cd {cwd}\n", "\n"]
+		lines = [f"{cmd}\n"] if cwd == "" else [f"{cmd}\n", f"cd {cwd}\n"]
 		self.file.writelines(lines)
 
 		# Trick so that 'isdir', 'isfile', etc always returns 'True'
@@ -128,3 +128,10 @@ class ScriptGenerator(FileSystemCommand):
 class BashScriptGenerator(ScriptGenerator):
 	def __init__(self, script_path: str) -> None:
 		super().__init__(script_path, OSTYPE.LINUX)
+
+	def ifelse(self, condition:str, ifstm:str, elsestm = None) -> None:
+		self.writeline(f"if [[ {condition} ]]")
+		self.writelines(["then", f"\t{ifstm}"])
+		if elsestm is not None:
+			self.writelines(["else", f"\t{elsestm}"])
+		self.writeline("fi")
