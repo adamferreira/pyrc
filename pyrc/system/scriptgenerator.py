@@ -1,3 +1,5 @@
+import io
+from typing import List, Dict
 from pyrc.system.command import FileSystemCommand
 from pyrc.system.filesystem import FileSystem, OSTYPE
 from pyrc.system.local import LocalFileSystem
@@ -6,64 +8,101 @@ class ScriptGenerator(FileSystemCommand):
 
 	@property
 	def filename(self) -> str:
-		return self.script.name
+		return self.file.name
 
 	"""
 	ScriptGenerator is will submit evey generated command (FileSystemCommand)
 	to a file by overriding exec_command
 	"""
 	def __init__(self, 
-			script_path:str, 
+			script_path:str,
+			mode:str,
 			ostype:OSTYPE = OSTYPE.LINUX
 		) -> None:
 
 		FileSystemCommand.__init__(self)
+		# Check, file should exists or belongs to an existing directory
+		local = LocalFileSystem()
+		assert local.isfile(script_path) or local.isdir(local.dirname(script_path))
 
-		# Set up type
+		# Set up type ans mode
+		self.mode = mode
 		self.ostype = ostype
-
-		# Setup script file
-		assert LocalFileSystem().isdir(LocalFileSystem().dirname(script_path))
-		self.script = open(script_path, "w+")
-		self.__last_printed_env:str = ""
+		self.file = None
 
 	def __del__(self):
 		self.close()
 		
 	def close(self):
-		if self.script is not None and not self.script.closed:
-			self.script.close()
+		if self.file is not None and not self.file.closed:
+			self.file.close()
+
+	def open(self) -> 'ScriptGenerator':
+		self.file = io.open(self.file_path, self.mode)
+		return self
+
+	#--------------------------
+	# Context Manager pattern
+	#--------------------------
+	def __enter__(self):
+		self.file = self.open()
+		return self
+	
+	def __exit__(self):
+		self.close()
 
 	#@overrides
 	def name(self) -> str:
-		return self.script.name if self.script is not None else ""
+		return self.file.name if self.file is not None else ""
+
+	#--------------------------
+	# File Writting
+	#--------------------------
 
 	#@overrides
 	def exec_command(self, cmd:str, cwd:str = "", environment:dict = None, event = None):
 		"""
 		For ScriptGenerator, all submitted command are writtend into a file eastead of being executed.
-		'environment' is ignored.
+		If cmd is not "", a cd to 'cwd' is performed before calling 'cmd'
+		'environment' and 'event' are ignored
 		"""
-		environment = {} if environment is None else self.environ
-		if len(environment) > 0:
-			# Do not reprint envs var is its the same than last call
-			# Because PATH=<vars>:PATH would became VERY long if called to many times
-			if self.__last_printed_env != str(environment):
-				self.script.writelines([f"export {var}={val}\n" for var,val in environment.items()])
-				self.script.writelines(["\n"])
-				self.__last_printed_env = str(environment)
-
-		self.script.writelines([
-			f"cd {cwd}\n",
-			f"{cmd}\n",
-			"\n"
-		])
+		lines = [f"{cmd}\n", "\n"] if cwd == "" else [f"{cmd}\n", f"cd {cwd}\n", "\n"]
+		self.file.writelines(lines)
 
 		# Trick so that 'isdir', 'isfile', etc always returns 'True'
 		# Because the connection is fake and pyrc-using python scripts would like to use those check
 		# when using genuine remote connector
 		# stdout = ["ok"], stderr = [], status = 0
 		return ["ok"], [], 0
+
+	def writeline(self, line:str) -> None:
+		self.exec_command(
+			cmd = line,
+			cwd = "",
+			environment = None,
+			event = None
+		)
+
+	def writelines(self, lines:List[str]) -> None:
+		[self.writeline(l) for l in lines]
+
+	def export(self, variables:Dict[str, str]) -> None:
+		"""
+		Export the given variables in the script.
+		Calls 'export k = v' for every k,v in variables
+		"""
+		self.writelines([f"export {var}={val}\n" for var,val in variables.items()])
+		self.writeline("\n")
+
+	def export_environ(self) -> None:
+		"""
+		Export this connector's 'environ' dict in the script as exports
+		"""
+		self.export(self.environ)
+
+	#--------------------------
+	# pyrc FileSystem Overloards
+	#--------------------------
 
 	#@overrides Necessary for FileSystem.__init__(self) as we overrides ostype
 	def platform(self) -> 'dict[str:str]':
@@ -83,3 +122,9 @@ class ScriptGenerator(FileSystemCommand):
 	#@overrides (useless fct)
 	def env(self, var:str) -> str:
 		return self.exec_command(f"${var}")
+
+
+# Utilitary Class for Bash scripting on linux
+class BashScriptGenerator(ScriptGenerator):
+	def __init__(self, script_path: str) -> None:
+		super().__init__(script_path, OSTYPE.LINUX)
