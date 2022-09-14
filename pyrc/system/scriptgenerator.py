@@ -92,7 +92,7 @@ class ScriptGenerator(FileSystemCommand):
 		Export the given variables in the script.
 		Calls 'export k = v' for every k,v in variables
 		"""
-		self.writelines([f"export {var}={val}\n" for var,val in variables.items()])
+		self.writelines([f"export {var}={val}" for var,val in variables.items()])
 		self.writeline("\n")
 		
 	def alias(self, aliases:Dict[str, str]) -> None:
@@ -100,7 +100,7 @@ class ScriptGenerator(FileSystemCommand):
 		Aliases the given aliases in the script.
 		Calls 'alias k = "v"' for every k,v in aliases
 		"""
-		self.writelines([f"alias {aname}=\"{avalue}\"\n" for aname,avalue in aliases.items()])
+		self.writelines([f"alias {aname}=\"{avalue}\"" for aname,avalue in aliases.items()])
 		self.writeline("\n")
 
 	def export_environ(self) -> None:
