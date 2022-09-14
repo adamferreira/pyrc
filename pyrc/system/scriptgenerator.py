@@ -29,6 +29,7 @@ class ScriptGenerator(FileSystemCommand):
 		self.mode = mode
 		self.ostype = ostype
 		self.file = None
+		self.script_path = script_path
 
 	def __del__(self):
 		self.close()
