@@ -38,7 +38,7 @@ class ScriptGenerator(FileSystemCommand):
 			self.file.close()
 
 	def open(self) -> 'ScriptGenerator':
-		self.file = io.open(self.file_path, self.mode)
+		self.file = io.open(self.script_path, self.mode)
 		return self
 
 	#--------------------------
