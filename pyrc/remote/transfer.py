@@ -130,7 +130,7 @@ def transfer(
 	to_fs:FileSystem,
 	compress_before:bool = False,
 	uncompress_after:bool = False,
-	from_path_delete:bool = False) -> tuple[str, str]:
+	from_path_delete:bool = False) -> 'tuple[str, str]':
 	"""
 	Transfert a file or directory from one filesystem to a directory in another one.
 	Args:
