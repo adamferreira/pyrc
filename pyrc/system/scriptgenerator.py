@@ -127,8 +127,8 @@ class ScriptGenerator(FileSystemCommand):
 
 # Utilitary Class for Bash scripting on linux
 class BashScriptGenerator(ScriptGenerator):
-	def __init__(self, script_path: str) -> None:
-		super().__init__(script_path, OSTYPE.LINUX)
+	def __init__(self, script_path: str, mode:str) -> None:
+		super().__init__(script_path, mode, OSTYPE.LINUX)
 
 	def ifelse(self, condition:str, ifstm:str, elsestm = None) -> None:
 		self.writeline(f"if [[ {condition} ]]")
