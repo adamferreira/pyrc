@@ -46,7 +46,7 @@ class ScriptGenerator(FileSystemCommand):
 	# Context Manager pattern
 	#--------------------------
 	def __enter__(self):
-		self.file = self.open()
+		self.open()
 		return self
 	
 	def __exit__(self):
