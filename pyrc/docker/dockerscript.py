@@ -1,43 +1,17 @@
 from typing import Union, List
-from pyrc.event import CommandPrettyPrintEvent
 from pyrc.system import ScriptGenerator, OSTYPE
 
 class DockerFile(ScriptGenerator):
 	"""
 	DockerFile is a ScriptGenerator that store dockerfile-like commands in a dockerfile
 	"""
-	def __init__(self, dockerfile:str, silent:bool = False) -> None:
+	def __init__(self, dockerfile:str, mode:str) -> None:
 		ScriptGenerator.__init__(
 			self,
 			script_path = dockerfile,
+			mode = mode,
 			ostype = OSTYPE.LINUX
 		)
-		self.silent = silent
-
-	def default_event(self):
-		return CommandPrettyPrintEvent(
-				self, 
-				print_input=True, 
-				print_errors=True, 
-				use_rich=True
-			)
-
-	#@overrides
-	def exec_command(self, cmd:str, cwd:str = "", environment:dict = None, event = None):
-		if event is None and not self.silent:
-			return self.exec_command(
-						cmd = cmd, 
-						cwd = cwd,
-						environment = None,
-						event = self.default_event()
-					)
-		else:
-			event.begin(cmd, cwd, stdin = None, stderr = None, stdout = None)
-			event.end()
-
-		self.script.writelines([
-			f"{cmd}\n"
-		])
 
 	def _gerenate_cmd(self, flag:str, statements:Union[str, List[str]]):
 		if isinstance(statements, str):
@@ -45,17 +19,17 @@ class DockerFile(ScriptGenerator):
 
 		if len(statements) == 0: return self
 		if len(statements) == 1:
-			self.exec_command(f"{flag} {statements[0]}")
+			self.writeline(f"{flag} {statements[0]}")
 		else:
 			run = "; \ \n\t".join(statements)
-			self.exec_command(f"{flag} {run}")
+			self.writeline(f"{flag} {run}")
 
 
 	def append_dockerfile(self, dockerfile:str) -> "DockerFile":
 		with open(dockerfile, 'r') as d:
 			for line in d.readlines():
 				line = line.strip("\n")
-				self.exec_command(line)
+				self.writeline(line)
 
 
 	def FROM(self, image:str) -> "DockerFile":
