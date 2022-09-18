@@ -12,9 +12,6 @@ class FileSystemCommand(FileSystem):
 	def __init__(self) -> None:
 		FileSystem.__init__(self)
 
-	def check_output(self, cmd:str, environment:dict = None):
-		return self.exec_command(cmd = cmd, environment = environment, event = pyevent.ErrorRaiseEvent(self))[0]
-
 	# ------------------------
 	#		To Override
 	# ------------------------
@@ -88,7 +85,7 @@ class FileSystemCommand(FileSystem):
 	#@overrides
 	def realpath(self, path:str) -> str:
 		if self.is_unix():
-			return self.check_output(cmd = f"realpath {path}")[0]
+			return self.evaluate(cmd = f"realpath {path}")[0]
 		else:
 			raise RuntimeError("realpath not supported for Windows remote systems")
 
@@ -215,12 +212,12 @@ class FileSystemCommand(FileSystem):
 		if self.is_unix():
 			return self.evaluate_path("$"+var)
 		else:
-			return self.check_output(f"python -c \"import os; print(os.environ[\'{var}\'])\"")[0]
+			return self.evaluate(f"python -c \"import os; print(os.environ[\'{var}\'])\"")[0]
 
 	#@overrides
 	def getsize(self, path) -> int:
 		if self.is_unix(): 
-			return int(self.check_output(f"stat --printf=\"%s\" {path}")[0])
+			return int(self.evaluate(f"stat --printf=\"%s\" {path}")[0])
 		else:
 			return NotImplemented
 

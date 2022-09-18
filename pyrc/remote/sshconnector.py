@@ -182,7 +182,7 @@ class RemoteSSHFileSystem(FileSystemCommand):
 		Returns:
 			[dict[str:str]]: A dict of remote system informations. Keys are 'system' and 'release'
 		"""
-		output = self.check_output("python3 -c \"import platform; print(platform.system()); print(platform.release())\"")
+		output = self.evaluate("python3 -c \"import platform; print(platform.system()); print(platform.release())\"")
 		return { "system" : output[0], "release" : output[1] }
 
 	# --------------------------------------------------

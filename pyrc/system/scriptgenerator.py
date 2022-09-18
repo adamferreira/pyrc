@@ -116,7 +116,7 @@ class ScriptGenerator(FileSystemCommand):
 	#@overrides Necessary for FileSystem.__init__(self) as we overrides ostype
 	def platform(self) -> 'dict[str:str]':
 		return {
-			"system" : FileSystem.os_to_str(self.ostype),
+			"system" : FileSystem.os_to_str(FileSystem.ostype),
 			"platform" : "unknown"
 		}
 
