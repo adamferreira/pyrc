@@ -1,5 +1,5 @@
 from genericpath import isdir
-import os, platform
+import os, platform, sys
 from pathlib import Path, PosixPath, WindowsPath
 try:
     from subprocess import *
@@ -101,7 +101,10 @@ class LocalFileSystem(FileSystem):
 
 	#@overrides
 	def unlink(self, path:str, missing_ok:bool=False) -> None:
-		type(self.__path)(path).unlink(missing_ok)
+		if sys.version_info.minor >= 8:
+			type(self.__path)(path).unlink(missing_ok)
+		else:
+			type(self.__path)(path).unlink()
 
 	#@overrides
 	def ls(self, path:str)-> 'list[str]':
