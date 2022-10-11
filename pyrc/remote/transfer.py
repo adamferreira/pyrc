@@ -185,7 +185,7 @@ def transfer(
 		# Uncompress transfered archive in 'to_fs' filesystem
 		to_fs.unzip(reveiced)
 		# Marks transfered archive as to be removed from 'to_fs'
-		from_fs_to_remove.append(reveiced)
+		to_fs_to_remove.append(reveiced)
 		# The actuel received file in 'to_fs' is now the uncompressed archive
 		received = to_fs.join(to_path, from_fs.basename(from_path))
 
