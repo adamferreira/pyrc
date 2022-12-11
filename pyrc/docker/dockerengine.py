@@ -93,3 +93,5 @@ class DockerEngine(FileSystemCommand):
 		self.append_bashrc("export" + "\ " + var + "=" + value)
 		# Also set the variable for the current sessiobn
 		self.environ[var] = value
+
+	#TODO: Load DockerEngine from container name
