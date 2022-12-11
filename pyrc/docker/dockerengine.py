@@ -14,29 +14,29 @@ class DockerEngine(FileSystemCommand):
 	DockerEngine is will submit evey generated command (FileSystemCommand)
 	to a docker client
 	"""
-	def __init__(self, user:str, image = None, container = None) -> None:
+	def __init__(self, user:str, container = None) -> None:
 		FileSystemCommand.__init__(self)
 		# Only works with linux style commands for now
 		self.ostype = OSTYPE.LINUX
-		self.user = user
-		self.image = image
-		self.container = container
+		self._user = user
+		self._container = container
+
 
 	#@overrides
 	def exec_command(self, cmd:str, cwd:str = "", environment:dict = None, event = None):
-		assert self.container is not None
+		assert self._container is not None
 		environment = {} if environment is None else self.environ
 
 		# to avoid "OCI runtime exec failed: exec failed: Cwd must be an absolute path: unknown"
 		# check if cwd is empty ot avoid recursive call
 		workdir = cwd if cwd == "" else self.evaluate_path(cwd)
 
-		exit_code, outputs = self.container.exec_run(
+		exit_code, outputs = self._container.exec_run(
 			cmd = f"bash -c \"{cmd}\"",
 			# to avoid "OCI runtime exec failed: exec failed: Cwd must be an absolute path: unknown"
 			workdir = workdir,
 			environment = environment,
-			user = self.user,
+			user = self._user,
 			stdout = True, stderr = True, stdin = False,
 			demux = False, # Return stdout and stderr separately,
 			stream = True
@@ -94,4 +94,11 @@ class DockerEngine(FileSystemCommand):
 		# Also set the variable for the current sessiobn
 		self.environ[var] = value
 
-	#TODO: Load DockerEngine from container name
+def get_engine(dockerclient, containername:str) -> DockerEngine:
+    try:
+        cont = dockerclient.containers.get(containername)
+        return DockerEngine("TODO", cont)
+    except:
+        return None
+
+#TODO: Load DockerEngine from container name
