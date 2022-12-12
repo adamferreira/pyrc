@@ -2,12 +2,7 @@
 from typing import Union, List
 from pyrc.system import FileSystem, FileSystemCommand, OSTYPE
 from pyrc.event import CommandPrettyPrintEvent
-
-try:
-    import docker
-    __DOCKER_AVAILABLE__ = True
-except:
-    __DOCKER_AVAILABLE__ = False
+from pyrc.docker.dockerutils import *
 
 class DockerEngine(FileSystemCommand):
 	"""
@@ -94,10 +89,10 @@ class DockerEngine(FileSystemCommand):
 		# Also set the variable for the current sessiobn
 		self.environ[var] = value
 
-def get_engine(dockerclient, containername:str) -> DockerEngine:
+def get_engine(dockerclient, user:str, containername:str) -> DockerEngine:
     try:
         cont = dockerclient.containers.get(containername)
-        return DockerEngine("TODO", cont)
+        return DockerEngine(user, cont)
     except:
         return None
 
