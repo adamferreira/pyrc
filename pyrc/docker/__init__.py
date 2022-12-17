@@ -1,3 +1,3 @@
-from .dockerutils import __DOCKER_AVAILABLE__
+from .dockerutils import docker_available, docker_client
 from .dockerscript import DockerFile
-from .dockerengine import DockerEngine
+from .dockerengine import DockerContainer, docker_container

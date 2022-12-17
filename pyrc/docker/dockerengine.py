@@ -4,7 +4,7 @@ from pyrc.system import FileSystem, FileSystemCommand, OSTYPE
 from pyrc.event import CommandPrettyPrintEvent
 from pyrc.docker.dockerutils import docker_client
 
-class DockerEngine(FileSystemCommand):
+class DockerContainer(FileSystemCommand):
 	"""
 	DockerEngine is will submit evey generated command (FileSystemCommand)
 	to a docker client
@@ -89,11 +89,11 @@ class DockerEngine(FileSystemCommand):
 		# Also set the variable for the current sessiobn
 		self.environ[var] = value
 
-def get_engine(user:str, containername:str, dockerclient = None) -> DockerEngine:
+def docker_container(user:str, containername:str, dockerclient = None) -> DockerContainer:
     if dockerclient is None:
         dockerclient = docker_client()
     try:
         cont = dockerclient.containers.get(containername)
-        return DockerEngine(user, cont)
+        return DockerContainer(user, cont)
     except:
         return None
