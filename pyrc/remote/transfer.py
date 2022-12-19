@@ -123,6 +123,7 @@ def transfer_dir(from_dirpath:str, to_dirpath:str, from_fs:FileSystem, to_fs:Fil
 			to_fs = to_fs
 		)
 
+# TODO: better error msg when path (from and to) does not exist
 def transfer(
 	from_path:str, 
 	to_path:str, 
