@@ -123,7 +123,8 @@ def transfer_dir(from_dirpath:str, to_dirpath:str, from_fs:FileSystem, to_fs:Fil
 			to_fs = to_fs
 		)
 
-# TODO: better error msg when path (from and to) does not exist
+# TODO: Better error msg when path (from and to) does not exist
+# TODO: Make compress_before work when from_path is a file
 def transfer(
 	from_path:str, 
 	to_path:str, 
@@ -150,7 +151,7 @@ def transfer(
 	if not from_fs.isfile(from_path) and not from_fs.isdir(from_path):
 		raise RuntimeError(f"Path {from_path} is not a valid path")
 
-	sent, reveiced = from_path, to_fs.join(to_path, from_fs.basename(from_path))
+	sent, received = from_path, to_fs.join(to_path, from_fs.basename(from_path))
 	# Files to be remove from 'from_fs' after the transfer completion
 	from_fs_to_remove = []
 	# Files to be remove from 'to_fs' after the transfer completion
@@ -175,26 +176,26 @@ def transfer(
 
 	# Step 2 : Transfer
 	if from_fs.isfile(from_path):
-		reveiced = transfer_files([from_path], to_path, from_fs, to_fs)[0]
+		received = transfer_files([from_path], to_path, from_fs, to_fs)[0]
 	elif from_fs.isdir(from_path):
 		transfer_dir(from_path, to_path, from_fs, to_fs)
 
 	# Step 3 : Uncompression (if requested)
 	if uncompress_after:
-		#'reveiced' must be an archive to be uncompressed
-		assert to_fs.isfile(reveiced) and to_fs.ext(reveiced) == ".zip"
+		#'received' must be an archive to be uncompressed
+		assert to_fs.isfile(received) and to_fs.ext(received) == ".zip"
 		# Uncompress transfered archive in 'to_fs' filesystem
-		to_fs.unzip(reveiced)
+		to_fs.unzip(received)
 		# Marks transfered archive as to be removed from 'to_fs'
-		to_fs_to_remove.append(reveiced)
-		# The actuel received file in 'to_fs' is now the uncompressed archive
+		to_fs_to_remove.append(received)
+		# The actual received file in 'to_fs' is now the uncompressed archive
 		received = to_fs.join(to_path, from_fs.basename(from_path))
 
 	# Step 4 : Cleaning elements from both filesystems
 	[from_fs.rm(p, recur = True) for p in from_fs_to_remove]
 	[to_fs.rm(p, recur = True) for p in to_fs_to_remove]
 
-	return sent, reveiced
+	return sent, received
 
 
 

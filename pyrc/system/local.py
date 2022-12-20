@@ -148,18 +148,23 @@ class LocalFileSystem(FileSystem):
 
 	#@overrides
 	def zip(self, path:str, archive_path:str = None, flag:str = "") -> str:
-		#TODO : Make it work when path is a file and not a directory
 		import shutil
-		archive_path = FileSystem.zip(self, path, archive_path, flag)
-		# Remove .zip extension when using shutil
-		shutil.make_archive(archive_path.replace(self.ext(archive_path), ""), 'zip', path)
-		return archive_path
+		if self.isfile(path):
+			# TODO: uncompressed result is a folder ... (we want a file)
+			# Remove .zip extension when using shutil
+			return shutil.make_archive(path.replace(self.ext(path), ""), 'zip', self.dirname(path), path)
+		if self.isdir(path):
+			return shutil.make_archive(path, 'zip', path)
+
+		return None
 
 	#@overrides
 	def unzip(self, archive_path:str, to_path:str = None, flag:str = "") -> str:
 		import shutil
 		folder_path = FileSystem.unzip(self, archive_path, to_path)
 		shutil.unpack_archive(filename = archive_path, extract_dir = folder_path)
+		# TODO: if extracted is a dir with one file (zipped file)
+		# Move the file to .. and remove the dir
 		return folder_path
 
 	#@overrides
