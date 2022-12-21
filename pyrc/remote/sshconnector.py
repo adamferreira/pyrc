@@ -86,7 +86,6 @@ class RemoteSSHFileSystem(FileSystemCommand):
 
 		# Creating remote connection
 		self._sshcon = paramiko.SSHClient()  # will create the object
-		self._scp = None # set in 'open()'
 		# Setting up proxy
 		self._sshcon.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # no known_hosts error
 
@@ -121,8 +120,6 @@ class RemoteSSHFileSystem(FileSystemCommand):
 		
 		self._sshcon.connect(**args)
 
-		# SCP connection
-		self._scp = SCPClient(self._sshcon.get_transport())
 		# Deduce os from new connection
 		FileSystemCommand.__init__(self)
 
@@ -132,8 +129,6 @@ class RemoteSSHFileSystem(FileSystemCommand):
 		"""
 		if self._sshcon:
 			self._sshcon.close()
-		if self._scp:
-			self._scp.close()
 
 	def __exec_command(self, cmd:str, cwd:str = "", environment:dict = None):
 		env_vars = ""

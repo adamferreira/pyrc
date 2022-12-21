@@ -150,11 +150,24 @@ class LocalFileSystem(FileSystem):
 	def zip(self, path:str, archive_path:str = None, flag:str = "") -> str:
 		import shutil
 		if self.isfile(path):
-			# TODO: uncompressed result is a folder ... (we want a file)
-			# Remove .zip extension when using shutil
-			return shutil.make_archive(path.replace(self.ext(path), ""), 'zip', self.dirname(path), path)
+			return shutil.make_archive(
+				# Remove .zip extension when using shutil
+				# Where the archive is created
+				base_name = path.replace(self.ext(path), ""),
+				format = 'zip',
+				# root_dir is a directory that will be the root directory of the archive, all paths in the archive will be relative to it; 
+				# for example, we typically chdir into root_dir before creating the archive
+				root_dir = self.dirname(path),
+				# base_dir is the directory where we start archiving from; i.e. base_dir will be the common prefix of all files and directories in the archive.
+				# base_dir must be given relative to root_dir.
+				base_dir = self.basename(path)
+			)
 		if self.isdir(path):
-			return shutil.make_archive(path, 'zip', path)
+			return shutil.make_archive(
+				base_name = path,
+				format = 'zip',
+				root_dir = path
+			)
 
 		return None
 
