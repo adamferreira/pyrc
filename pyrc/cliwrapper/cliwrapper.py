@@ -33,6 +33,10 @@ class CLIWrapper(object):
 		If cmd is empty but not the prefix, the executed command id "{prefix}"
 		If both are empty nothing is executed
 		If both are not empty, the executed command is "{prefix} {cmd}"
+		Returns:
+			out:list[str]
+			err:list[str]
+			status:int
 		"""
 		_cmd:str = ""
 		if cmd == "":
