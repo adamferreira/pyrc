@@ -16,7 +16,6 @@ class DockerContainer(FileSystemCommand):
 		self._user = user
 		self._container = container
 
-
 	#@overrides
 	def exec_command(self, cmd:str, cwd:str = "", environment:dict = None, event = None):
 		assert self._container is not None
