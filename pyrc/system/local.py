@@ -49,7 +49,6 @@ class LocalFileSystem(FileSystem):
 
 	#@overrides
 	def exec_command(self, cmd:str, cwd:str = "", environment:dict = None, event:pyevent.Event = None):
-		# TODO : make event nullable ?
 		event = pyevent.CommandPrettyPrintEvent(self) if event is None else event
 		p = Popen(
 			cmd,
